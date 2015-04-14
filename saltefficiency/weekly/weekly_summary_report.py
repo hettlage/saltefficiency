@@ -19,7 +19,7 @@ import MySQLdb
 import matplotlib.pyplot as pl
 import numpy as np
 from datetime import datetime
-import report_queries as rq
+import saltefficiency.util.report_queries as rq
 import getopt
 
 

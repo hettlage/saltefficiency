@@ -1,14 +1,14 @@
 
 import string
-import datetime 
+import datetime
 
 import numpy as np
 
 import pylab as pl
 from matplotlib.patches import Rectangle
 
-import blockvisitstats as bvs
-import sdb_utils as su
+import saltefficiency.util.blockvisitstats as bvs
+import saltefficiency.util.sdb_utils as su
 
 
 def create_night_table(obsdate, sdb, els):
@@ -17,7 +17,7 @@ def create_night_table(obsdate, sdb, els):
     Parameters
     ----------
     nid: int
-        NightInfo_Id 
+        NightInfo_Id
 
     sdb: ~mysql.mysql
        A connection to the sdb database
@@ -95,14 +95,14 @@ def create_night_table(obsdate, sdb, els):
     Engineering TIme: {4: 0.2f} <br>
     Weather Time: {1:0.2f} <br>
     Time Lost to Problems: {3:0.2f} <br>\n
-    <br> 
+    <br>
     Mirror Alignment Time: {2:0.2f} <br>\n
 """.format(night.sciencetime, night.weathertime, night.mirroralignmenttime, night.problemtime, night.engineertime, night.totaltime/3600.0)
 
     table_txt ='<p><table>'
     table_txt +='<tr><th>Time</th><th>Type</th><th>Length</th><th>Comment</th></tr>\n'
     status = 0
-    start = None 
+    start = None
     for i in range(len(night.status_arr)):
         if start is not None and night.status_arr[i]!=status:
            table_txt += create_row(sdb, start, i, night_dict, night, obsdate)
@@ -110,7 +110,7 @@ def create_night_table(obsdate, sdb, els):
         if night.status_arr[i]>0 and start is None:
            status = night.status_arr[i]
            start = i
-        
+
     table_txt +='</table></p>\n'
     return  info_txt + table_txt
 
@@ -130,7 +130,7 @@ def create_row(sdb, sid, eid, night_dict, night, obsdate):
     min_time = 600
     block_time = None
     t0 = convert_decimal_hours(obsdate, 1.0)
-    for k in night_dict.keys(): 
+    for k in night_dict.keys():
         t = (t1 - t0).seconds - (k-t0).seconds
         if abs(t) < min_time:
            block_time = k
@@ -163,7 +163,7 @@ def convert_decimal_hours(obsdate, t1):
     return t1
 
 
-def create_faults(sdb, nid): 
+def create_faults(sdb, nid):
     """Return a list of information about the faults
 
     """
@@ -192,7 +192,7 @@ def create_mirror_alignment(event_list):
     for r in event_list:
         if r[0]==10 and mirror_start==False:
            t=r[1]
-           #use the time from the 
+           #use the time from the
            if old_event[0] in [4, 6, 13, 14]: t=old_event[1]
            mirror_start=[t]
         if mirror_start:
@@ -234,9 +234,9 @@ class Night:
        self.color_list=['none', 'blue', 'green', 'purple', 'red','yellow'] #none, science, engineer, weather, problem, rejected
 
    def add_weather(self, time_list, wea_arr):
-       """Add the weather to the status array and weather 
+       """Add the weather to the status array and weather
           the telescope is closed for weather or not
- 
+
           time_list is in seconds since the start of the night
        """
        nstart = (self.night_start-self.day_start).seconds

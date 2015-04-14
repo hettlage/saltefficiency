@@ -15,9 +15,9 @@ import matplotlib.pyplot as pl
 import numpy as np
 from datetime import datetime
 
-import mysql
-import report_queries as rq
-import sdb_utils as su
+import saltefficiency.util.mysql
+import saltefficiency.util.report_queries as rq
+import saltefficiency.util.sdb_utils as su
 
 from create_night_table import create_night_table
 
@@ -49,11 +49,11 @@ def night_summary_page(obsdate, sdb, els, dirname='./logs/'):
     so = sdb.select('Surname', 'NightInfo join SaltOperator on SO1_Id=SO_Id', logic)[0][0]
     ct = sdb.select('Surname', 'NightInfo join Investigator on CTDuty_Id=Investigator_Id', logic)[0][0]
     info_txt = """
-<h2> Night Summary for {0} </h2> 
+<h2> Night Summary for {0} </h2>
 <div>
-   SA: {1} <br> 
-   SO: {2} <br> 
-   CT: {3} <br> 
+   SA: {1} <br>
+   SO: {2} <br>
+   CT: {3} <br>
 </div>""".format(obsdate, sa, so, ct)
 
     sel_times = 'ScienceTime, EngineeringTime, TimeLostToWeather, TimeLostToProblems'
@@ -79,13 +79,13 @@ def night_summary_page(obsdate, sdb, els, dirname='./logs/'):
 
     # add a list of proposals and files for each proposal
     data_txt = data_breakdown(sdb, obsdate)
-    night_txt += data_txt 
+    night_txt += data_txt
 
     #write the results to the output
     write_night_report_to_file(obsdate, night_txt, dirname)
 
 def data_breakdown(sdb, obsdate):
-    """Produce a list of the data associated with each proposal 
+    """Produce a list of the data associated with each proposal
        observed that night
     """
     data_txt = '<h3> Data Files</h3>'
@@ -108,7 +108,7 @@ def data_breakdown(sdb, obsdate):
 
     data_txt += '</table>\n'
     return data_txt
-    
+
 
 
 def write_night_report_to_file(obsdate, txt, dirname='./logs/'):
@@ -134,8 +134,8 @@ def write_night_report_to_file(obsdate, txt, dirname='./logs/'):
     """.format(obsdate)
 
     bottom="""\n<br><center> Updated: {0} </center>
-              </body> 
-              </hmtl>""".format(datetime.now().strftime('%Y-%m-%d  %H:%M:%S')) 
+              </body>
+              </hmtl>""".format(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
     html_txt = header+txt + bottom
     filename = 'night_report_{0}.html'.format(obsdate)
 
@@ -146,7 +146,7 @@ if __name__=='__main__':
 
     # open mysql connection to the sdb
     mysql_con = MySQLdb.connect(host='sdb.cape.saao.ac.za',
-                port=3306, user=os.environ['SDBUSER'], 
+                port=3306, user=os.environ['SDBUSER'],
                 passwd=os.environ['SDBPASS'], db='sdb')
 
     sdbhost='sdb.salt'
