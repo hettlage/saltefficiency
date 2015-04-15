@@ -56,20 +56,15 @@ Specifying a date and a range in days to query in the past:
                                  history for the query
 '''
 
-
-
-
 import sys
 import os
 import getopt
-import pandas as pd
-import pandas.io.sql as psql
 import MySQLdb
 import matplotlib.pyplot as pl
 import saltefficiency.util.report_queries as rq
 import numpy as np
 import matplotlib.dates as mdates
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def usage():
     print __usage__
@@ -178,10 +173,41 @@ def parse_commandline(argv):
 
     return date, interval
 
-def priority_breakdown_pie_chart(x, ds, dirname='./logs/'):
-    '''
-    make a pie chart from the dataframe
-    '''
+
+def priority_breakdown(plot_date, interval, title, out, format='png', dpi=100):
+    """Output a pie chart for the breakdown of priorities.
+
+     The breakdown is aggregated over all nights from the first to last night. The output target for the plot may either
+     be specified by a file path or supplied as a file-like object. (Technically, the oputput target can be any object
+     accepted by Matplotlib as an output target.)
+
+     The plot title may contain placeholders {first_night} and {last_night}, which will be replaced with the respective
+     date in the format yyy-mm-dd, as well as the placeholder {total_blocks}, which will be replaced with the total
+     number of blocks.
+
+     Parameters
+     ----------
+     plot_date : date
+        date for which the plot is created; this is the date when the last night ends
+     interval: int
+        number of nights to plot
+     title: string
+        plot title
+     out : string or file-like object
+        output target where the plot is saved to
+     format: string
+        format of the generated image (the default is 'png')
+     dpi: int
+        dpi of the generated image (the default is 100)
+    """
+
+    fig = pl.figure(facecolor='w', figsize=[6, 6])
+    ax = fig.add_subplot(111)
+    ax.set_aspect = 1
+
+    # get data from database
+    x = rq.weekly_priority_breakdown(mysql_con, date, interval=my_interval)
+
     temp = list(x['Priority'])
     no_blocks = map(int, list(x['No. Blocks']))
     labels = ['P'+str(temp[i])+' - ' + str(no_blocks[i]) for i in range(0,len(temp))]
@@ -194,25 +220,60 @@ def priority_breakdown_pie_chart(x, ds, dirname='./logs/'):
     ax = fig.add_subplot(111)
     ax.set_aspect=1
 
-    pie_wedge_collection = ax.pie(values,
-                                  colors=colours,
-                                  pctdistance=0.8,
-                                  radius = 0.95,
-                                  autopct='%1.1f%%',
-                                  textprops = {'fontsize':10,
-                                               'color':'w'},
-                                  wedgeprops = {'edgecolor':'white'})
+    ax.pie(values,
+           colors=colours,
+           pctdistance=0.8,
+           radius=0.95,
+           autopct='%1.1f%%',
+           textprops={'fontsize':10,
+                      'color':'w'},
+           wedgeprops={'edgecolor':'white'})
 
     ax.legend(labels=labels, frameon=False, loc=(-0.15,0.7), fontsize=8)
-    title_txt = 'Weekly Priority Breakdown - ' + str(int(x['No. Blocks'].sum())) + ' Blocks Total' + '\n {}'.format(ds)
 
+    first_night = plot_date - timedelta(days=interval)
+    last_night = plot_date - timedelta(days=1)
+    title_txt = title.format(first_night=first_night,
+                             last_night=last_night,
+                             total_blocks=int(x['No. Blocks'].sum()))
     ax.set_title(title_txt, fontsize=12)
 
-    filename = dirname+'priority_breakdown_pie_chart_' +'-'.join([ds.split()[0].replace('-',''), ds.split()[2].replace('-','')])+'.png'
-    pl.savefig(filename, dpi=100)
-#    pl.show()
+    pl.savefig(out, format=format, dpi=dpi)
 
-def weekly_total_time_breakdown_pie_chart(x, ds, dirname='./logs/'):
+
+def total_time_breakdown(plot_date, interval, title, out, format='png', dpi=100):
+    """Output a pie chart for the breakdown of time.
+
+     The time is summed up for all nights from the first to last night. The output target for the plot may either
+     be specified by a file path or supplied as a file-like object. (Technically, the oputput target can be any object
+     accepted by Matplotlib as an output target.)
+
+     The plot title may contain placeholders {first_night} and {last_night}, which will be replaced with the respective
+     date in the format yyy-mm-dd, as well as the placeholder {total_night_length}, which will be replaced with the
+     total night length in seconds.
+
+     Parameters
+     ----------
+     plot_date : date
+        date for which the plot is created; this is the date when the last night ends
+     interval: int
+        number of nights to plot
+     title: string
+        plot title
+     out : string or file-like object
+        output target where the plot is saved to
+     format: string
+        format of the generated image (the default is 'png')
+     dpi: int
+        dpi of the generated image (the default is 100)
+    """
+
+    fig = pl.figure(facecolor='w', figsize=[6, 6])
+    ax = fig.add_subplot(111)
+    ax.set_aspect = 1
+
+    # get data from database
+    x = rq.weekly_total_time_breakdown(mysql_con, plot_date, interval=interval)
 
     labels = ['Science - {}'.format(x['ScienceTime'][0]),
               'Engineering - {}'.format(x['EngineeringTime'][0]),
@@ -226,136 +287,59 @@ def weekly_total_time_breakdown_pie_chart(x, ds, dirname='./logs/'):
 
     colours = ['b','c','g','r']
 
-    fig = pl.figure(facecolor='w', figsize=[6, 6])
-    ax = fig.add_subplot(111)
-    ax.set_aspect=1
-
-    pie_wedge_collection = ax.pie(values,
-                                  colors=colours,
-                                  pctdistance=0.8,
-                                  radius = 0.95,
-                                  autopct='%1.1f%%',
-                                  textprops = {'fontsize':10,
-                                               'color':'w'},
-                                  wedgeprops = {'edgecolor':'white'})
+    ax.pie(values,
+           colors=colours,
+           pctdistance=0.8,
+           radius=0.95,
+           autopct='%1.1f%%',
+           textprops={'fontsize':10,
+                      'color':'w'},
+           wedgeprops={'edgecolor':'white'})
 
     ax.legend(labels=labels, frameon=False, loc=(-0.15,0.8), fontsize=8)
 
-    title_txt = 'Weekly Time Breakdown - {} Total\n{}'.format(x['NightLength'][0], ds)
+    first_night = plot_date - timedelta(days=interval)
+    last_night = plot_date - timedelta(days=1)
+    title_txt = title.format(first_night=first_night,
+                             last_night=last_night,
+                             total_night_length=x['NightLength'][0])
     ax.set_title(title_txt, fontsize=12)
 
-    filename = 'total_time_breakdown_pie_chart_' + '-'.join([ds.split()[0].replace('-',''), ds.split()[2].replace('-','')])+'.png'
-    pl.savefig(dirname+filename, dpi=100)
-#    pl.show()
-
-def weekly_subsystem_breakdown_pie_chart(x, y, col_dict, ds, dirname='./logs/'):
+    pl.savefig(out, format=format, dpi=dpi)
 
 
-    subsystem = list(x['SaltSubsystem'])
-    time = list(x['TotalTime'])
+def subsystem_breakdown(plot_date, interval, title, out, format='png', dpi=100):
+    """Output a pie chart for the breakdown of time lost due to problems.
 
-    labels = [subsystem[i] + ' - ' + time[i] for i in range(0,len(subsystem))]
-    values = list(x['Time'])
+     The breakdown is shown for all nights from the first to last night. The output target for the plot may either be
+     specified by a file path or supplied as a file-like object. (Technically, the oputput target can be any object
+     accepted by Matplotlib as an output target.)
 
-    colours = [col_dict[i] for i in subsystem]
+     Note that if you want the breakdown for a single night, you have to pass the same date as the first and last night.
+
+     The plot title may contain placeholders {first_night} and {last_night}, which will be replaced with the respective
+     date in the format yyy-mm-dd, as well as the placeholder {total_time}, which will be replaced with the total time
+     in seconds.
+
+     Parameters
+     ----------
+     plot_date : date
+        date for which the plot is created; this is the date when the last night ends
+     interval: int
+        number of nights to plot
+     title: string
+        plot title
+     out : string or file-like object
+        output target where the plot is saved to
+     format: string
+        format of the generated image (the default is 'png')
+     dpi: int
+        dpi of the generated image (the default is 100)
+    """
 
     fig = pl.figure(facecolor='w', figsize=[6, 6])
     ax = fig.add_subplot(111)
     ax.set_aspect=0.8
-
-    pie_wedge_collection = ax.pie(values,
-                                  colors=colours,
-                                  pctdistance=0.8,
-                                  radius = 0.9,
-                                  autopct='%1.1f%%',
-                                  textprops = {'fontsize':10,
-                                               'color':'k'},
-                                  wedgeprops = {'edgecolor':'white'})
-
-    ax.legend(labels=labels, frameon=False, loc=(-0.15,0.5), fontsize=8)
-
-    title_txt = 'Weekly Problems Breakdown - {}\n{}'.format(y['TotalTime'][0], ds)
-    ax.set_title(title_txt, fontsize=12)
-
-    filename = 'subsystem_breakdown_pie_chart_'+'-'.join([ds.split()[0].replace('-',''), ds.split()[2].replace('-','')])+'.png'
-    pl.savefig(dirname+filename, dpi=100)
-#    pl.show()
-
-def weekly_time_breakdown(x, ds, dirname='./logs/'):
-    '''
-    produce a bar stacked bar chart plot of the time breakdown per day for the
-    past week.
-    '''
-
-    fig = pl.figure(figsize=(10,4),facecolor='w')
-    ax = fig.add_subplot(111)
-    width = 0.65
-    ax.grid(which='major', axis='y')
-    # science time per day
-    s = ax.bar(x['Date'],
-                x['Science'],
-                width,
-                color = 'b',
-                edgecolor='w')
-
-    # engineering time per day
-    e = ax.bar(x['Date'],
-               x['Engineering'],
-                width,
-                bottom = x['Science'],
-                color = 'c',
-                edgecolor='w')
-
-    # weather time per day
-    w = ax.bar(x['Date'],
-               x['Weather'],
-                width,
-                bottom = x['Science'] + x['Engineering'],
-                color = 'g',
-                edgecolor='w')
-
-    # problem time per day
-    p = ax.bar(x['Date'],
-               x['Problems'],
-                width,
-                bottom = x['Science'] + x['Engineering'] + x['Weather'],
-                color = 'r',
-                edgecolor='w')
-
-
-    ax.set_ylabel('Hours', fontsize=11)
-    ax.set_xlabel('Date', fontsize=11)
-    fig.legend((s[0], e[0], w[0], p[0]),
-                   ('Science Time',
-                    'Engineering Time',
-                    'Time lost to Weather',
-                    'Time lost to Problems'),
-                    frameon=False,
-                    fontsize=10,
-                    loc=(0.0,0.70))
-
-    title_txt = 'Weekly Time Breakdown - {}'.format(ds)
-
-    ax.set_title(title_txt, fontsize=11)
-    ax.xaxis_date()
-    date_formatter = mdates.DateFormatter('%a \n %Y-%m-%d')
-    ax.xaxis.set_major_formatter(date_formatter)
-
-    for tick in ax.xaxis.get_major_ticks():
-                tick.label.set_fontsize(8)
-    for tick in ax.yaxis.get_major_ticks():
-                tick.label.set_fontsize(8)
-
-    fig.autofmt_xdate(rotation=0, ha = 'left')
-    fig.subplots_adjust(left=0.22, bottom=0.20, right=0.96, top=None,
-                      wspace=None, hspace=None)
-    pl.autoscale()
-    filename = 'time_breakdown_'+'-'.join([ds.split()[0].replace('-',''), ds.split()[2].replace('-','')])+'.png'
-    pl.savefig(dirname+filename, dpi=100)
-#    pl.show()
-
-
-if __name__=='__main__':
 
     # set the colours for all the subsystems:
     subsystems_list = ['BMS', 'DOME', 'TC', 'PMAS', 'SCAM', 'TCS', 'STRUCT',
@@ -368,34 +352,191 @@ if __name__=='__main__':
     for i in range(0, len(subsystems_list)):
         col_dict[subsystems_list[i]] = colour_map[i]
 
+    # get data from database
+    x = rq.weekly_subsystem_breakdown(mysql_con, plot_date, interval=interval)
+    y = rq.weekly_subsystem_breakdown_total(mysql_con, date, interval=interval)
+
+    subsystem = list(x['SaltSubsystem'])
+    time = list(x['TotalTime'])
+
+    labels = [subsystem[i] + ' - ' + time[i] for i in range(0,len(subsystem))]
+    values = list(x['Time'])
+
+    colours = [col_dict[i] for i in subsystem]
+
+    ax.pie(values,
+           colors=colours,
+           pctdistance=0.8,
+           radius = 0.9,
+           autopct='%1.1f%%',
+           textprops = {'fontsize':10,
+                        'color':'k'},
+           wedgeprops = {'edgecolor':'white'})
+
+    ax.legend(labels=labels, frameon=False, loc=(-0.15,0.5), fontsize=8)
+
+    first_night = plot_date - timedelta(days=interval)
+    last_night = plot_date - timedelta(days=1)
+    title_txt = title.format(first_night=first_night.strftime('%Y-%m-%d'),
+                             last_night=last_night.strftime('%Y-%m-%d'),
+                             total_time=y['TotalTime'][0])
+    ax.set_title(title_txt, fontsize=12)
+
+    pl.savefig(out, format=format, dpi=dpi)
+
+
+def time_breakdown(plot_date, interval, title, out, format='png', dpi=100):
+    """Output a stacked bar plot of the time breakdown.
+
+     The breakdown is shown for all nights from the first to last night. The output target for the plot may either be
+     specified by a file path or supplied as a file-like object. (Technically, the oputput target can be any object
+     accepted by Matplotlib as an output target.)
+
+     Note that if you want the breakdown for a single night, you have to pass the same date as the first and last night.
+
+     The plot title may contain placeholders {first_night} and {last_night}, which will be replaced with the respective
+     date in the format yyy-mm-dd.
+
+     Parameters
+     ----------
+     plot_date : date
+        date for which the plot is created; this is the date when the last night ends
+     interval: int
+        number of nights to plot
+     title: string
+        plot title
+     out : string or file-like object
+        output target where the plot is saved to
+     format: string
+        format of the generated image (the default is 'png')
+     dpi: int
+        dpi of the generated image (the default is 100)
+    """
+
+    fig = pl.figure(figsize=(10,4),facecolor='w')
+    ax = fig.add_subplot(111)
+    width = 0.65
+    ax.grid(which='major', axis='y')
+
+    # get data from database
+    data = rq.weekly_time_breakdown(mysql_con, plot_date, interval=interval)
+
+    # science time per day
+    s = ax.bar(data['Date'],
+               data['Science'],
+               width,
+               color='b',
+               edgecolor='w')
+
+    # engineering time per day
+    e = ax.bar(data['Date'],
+               data['Engineering'],
+               width,
+               bottom=data['Science'],
+               color='c',
+               edgecolor='w')
+
+    # weather time per day
+    w = ax.bar(data['Date'],
+               data['Weather'],
+               width,
+               bottom=data['Science'] + data['Engineering'],
+               color='g',
+               edgecolor='w')
+
+    # problem time per day
+    p = ax.bar(data['Date'],
+               data['Problems'],
+               width,
+               bottom=data['Science'] + data['Engineering'] + data['Weather'],
+               color='r',
+               edgecolor='w')
+
+
+    ax.set_ylabel('Hours', fontsize=11)
+    ax.set_xlabel('Date', fontsize=11)
+    fig.legend((s[0], e[0], w[0], p[0]),
+               ('Science Time',
+                'Engineering Time',
+                'Time lost to Weather',
+                'Time lost to Problems'),
+               frameon=False,
+               fontsize=10,
+               loc=(0.0,0.70))
+
+    first_night = plot_date - timedelta(days=interval)
+    last_night = plot_date - timedelta(days=1)
+    title_txt = title.format(first_night=first_night.strftime('%Y-%m-%d'),
+                             last_night=last_night.strftime('%Y-%m-%d'))
+
+    ax.set_title(title_txt, fontsize=11)
+    ax.xaxis_date()
+    date_formatter = mdates.DateFormatter('%a \n %Y-%m-%d')
+    ax.xaxis.set_major_formatter(date_formatter)
+
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label.set_fontsize(8)
+    for tick in ax.yaxis.get_major_ticks():
+        tick.label.set_fontsize(8)
+
+    fig.autofmt_xdate(rotation=0, ha='left')
+    fig.subplots_adjust(left=0.22, bottom=0.20, right=0.96, top=None,
+                        wspace=None, hspace=None)
+    pl.autoscale()
+    pl.savefig(out, format=format, dpi=dpi)
+
+if __name__=='__main__':
+
+
 
     # open mysql connection to the sdb
-    mysql_con = MySQLdb.connect(host='sdb.cape.saao.ac.za',
+    mysql_con = MySQLdb.connect(host='devsdb',
                 port=3306,user=os.environ['SDBUSER'],
-                passwd=os.environ['SDBPASS'], db='sdb')
+                passwd=os.environ['SDBPASS'], db='sdb_v6')
 
 #    obsdate = sys.argv[1]
 #    date = '{}-{}-{}'.format(obsdate[0:4], obsdate[4:6], obsdate[6:8])
 #    interval = sys.argv[2]
 
-    date, interval = parse_commandline(sys.argv[1:])
+    date, my_interval = parse_commandline(sys.argv[1:])
 
     # use the connection to get the required data: _d
-    dr_d = rq.date_range(mysql_con, date, interval=interval)
-    wpb_d = rq.weekly_priority_breakdown(mysql_con, date, interval=interval)
-    wtb_d = rq.weekly_time_breakdown(mysql_con, date, interval=interval)
-    wttb_d = rq.weekly_total_time_breakdown(mysql_con, date, interval=interval)
-    wsb_d = rq.weekly_subsystem_breakdown(mysql_con, date, interval=interval)
-    wsbt_d = rq.weekly_subsystem_breakdown_total(mysql_con, date, interval=interval)
-    wtb_d = rq.weekly_time_breakdown(mysql_con, date, interval=interval)
+    dr_d = rq.date_range(mysql_con, date, interval=my_interval)
+    wpb_d = rq.weekly_priority_breakdown(mysql_con, date, interval=my_interval)
+    wtb_d = rq.weekly_time_breakdown(mysql_con, date, interval=my_interval)
+    wttb_d = rq.weekly_total_time_breakdown(mysql_con, date, interval=my_interval)
+    wsb_d = rq.weekly_subsystem_breakdown(mysql_con, date, interval=my_interval)
+    wsbt_d = rq.weekly_subsystem_breakdown_total(mysql_con, date, interval=my_interval)
+    wtb_d = rq.weekly_time_breakdown(mysql_con, date, interval=my_interval)
 
     date_string = '{} - {}'.format(dr_d['StartDate'][0], dr_d['EndDate'][0])
 
-    # testing the pie_chart method
-    priority_breakdown_pie_chart(wpb_d, date_string,'')
-    weekly_total_time_breakdown_pie_chart(wttb_d, date_string,'')
-    weekly_subsystem_breakdown_pie_chart(wsb_d, wsbt_d, col_dict, date_string,'')
-    weekly_time_breakdown(wtb_d, date_string,'')
+    plotdate = datetime.strptime(date, '%Y-%m-%d').date()
+    first_night = plotdate - timedelta(days=my_interval)
+    last_night = plotdate - timedelta(days=1)
+    first_night_txt = first_night.strftime('%Y%m%d')
+    last_night_txt = last_night.strftime('%Y%m%d')
+
+
+# testing the pie_chart method
+    priority_breakdown(plot_date=plotdate,
+                       interval=my_interval,
+                       title='Weekly Priority Breakdown - {total_blocks} Blocks Total' + '\n {first_night} - {last_night}',
+                       out=file('priority_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt), mode='w'))
+
+    total_time_breakdown(plot_date=plotdate,
+                   interval=my_interval,
+                   title='Weekly Time Breakdown - {total_night_length} Total\n{first_night} - {last_night}',
+                   out=file('total_time_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt), mode='w'))
+    subsystem_breakdown(plot_date=plotdate,
+                        interval=my_interval,
+                        title='Weekly Problems Breakdown - {total_time}\n{first_night} - {last_night}',
+                        out=file('subsystem_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt), mode='w'))
+
+    time_breakdown(plot_date=plotdate,
+                   interval=my_interval,
+                   title='Weekly Time Breakdown - {first_night} - {last_night}',
+                   out=file('time_breakdown_{}-{}.png'.format(first_night_txt, last_night_txt), mode='w'))
 
     mysql_con.close()
 
