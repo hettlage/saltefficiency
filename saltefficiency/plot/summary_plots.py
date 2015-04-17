@@ -566,17 +566,6 @@ class PlotGeneration:
 
 if __name__ == '__main__':
     def generate_plots():
-         # open mysql connection to the sdb
-        mysql_con = MySQLdb.connect(host='devsdb',
-                                    port=3306,
-                                    user=os.environ['SDBUSER'],
-                                    passwd=os.environ['SDBPASS'],
-                                    db='sdb_v6')
-
-    #    obsdate = sys.argv[1]
-    #    date = '{}-{}-{}'.format(obsdate[0:4], obsdate[4:6], obsdate[6:8])
-    #    interval = sys.argv[2]
-
         date, my_interval = parse_commandline(sys.argv[1:])
 
         plotdate = datetime.strptime(date, '%Y-%m-%d').date()
