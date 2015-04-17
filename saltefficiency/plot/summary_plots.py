@@ -316,7 +316,10 @@ class PlotGeneration:
                                  total_blocks=int(x['No. Blocks'].sum()))
         ax.set_title(title_txt, fontsize=12)
 
+        if type(out) is str:
+            out = file(out, mode='w')
         pl.savefig(out, format=format, dpi=dpi)
+        out.close()
 
 
     def total_time_breakdown(self, plot_date, interval, title, out, format='png', dpi=100):
@@ -383,7 +386,10 @@ class PlotGeneration:
                                  total_night_length=x['NightLength'][0])
         ax.set_title(title_txt, fontsize=12)
 
+        if type(out) is str:
+            out = file(out, mode='w')
         pl.savefig(out, format=format, dpi=dpi)
+        out.close()
 
 
     def subsystem_breakdown(self, plot_date, interval, title, out, format='png', dpi=100):
@@ -460,7 +466,10 @@ class PlotGeneration:
                                  total_time=y['TotalTime'][0])
         ax.set_title(title_txt, fontsize=12)
 
+        if type(out) is str:
+            out = file(out, mode='w')
         pl.savefig(out, format=format, dpi=dpi)
+        out.close()
 
 
     def time_breakdown(self, plot_date, interval, title, out, format='png', dpi=100):
@@ -561,7 +570,11 @@ class PlotGeneration:
         fig.subplots_adjust(left=0.22, bottom=0.20, right=0.96, top=None,
                             wspace=None, hspace=None)
         pl.autoscale()
+
+        if type(out) is str:
+            out = file(out, mode='w')
         pl.savefig(out, format=format, dpi=dpi)
+        out.close()
 
 
 if __name__ == '__main__':
@@ -582,18 +595,18 @@ if __name__ == '__main__':
              pg.priority_breakdown(plot_date=plotdate,
                                       interval=my_interval,
                                       title='Weekly Priority Breakdown - {total_blocks} Blocks Total' + '\n {first_night} - {last_night}',
-                                      out=file('priority_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt), mode='w'))
+                                      out='priority_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt))
              pg.total_time_breakdown(plot_date=plotdate,
                                         interval=my_interval,
                                         title='Weekly Time Breakdown - {total_night_length} Total\n{first_night} - {last_night}',
-                                        out=file('total_time_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt), mode='w'))
+                                        out='total_time_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt))
              pg.subsystem_breakdown(plot_date=plotdate,
                                     interval=my_interval,
                                     title='Weekly Problems Breakdown - {total_time}\n{first_night} - {last_night}',
-                                    out=file('subsystem_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt), mode='w'))
+                                    out='subsystem_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt))
              pg.time_breakdown(plot_date=plotdate,
                                interval=my_interval,
                                title='Weekly Time Breakdown - {first_night} - {last_night}',
-                               out=file('time_breakdown_{}-{}.png'.format(first_night_txt, last_night_txt), mode='w'))
+                               out='time_breakdown_{}-{}.png'.format(first_night_txt, last_night_txt))
 
     generate_plots()
