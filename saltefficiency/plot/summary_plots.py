@@ -65,7 +65,10 @@ import matplotlib.pyplot as pl
 import saltefficiency.util.report_queries as rq
 import numpy as np
 import matplotlib.dates as mdates
+from collections import OrderedDict
 from datetime import datetime, timedelta
+
+from bokeh_plots import stacked_bar_chart, pie_chart
 
 
 def usage():
@@ -321,6 +324,63 @@ class PlotGeneration:
         pl.savefig(out, format=format, dpi=dpi)
         out.close()
 
+    def priority_breakdown_plot(self, plot_date, interval, title, plot_width, legend_width):
+        """Generate a pie chart for the breakdown of priorities.
+
+        The breakdown is aggregated over all nights from the first to last night.
+
+        The plot title may contain placeholders {first_night} and {last_night}, which will be replaced with the respective
+        date in the format yyy-mm-dd, as well as the placeholder {total_blocks}, which will be replaced with the total
+        number of blocks.
+
+        Parameters
+        ----------
+        plot_date: date
+            date for which the plot is created; this is the date when the last night ends
+        interval: int
+            number of nights to plot
+        title: string
+            plot title
+        plot_width: int
+            width of the plot, in pixels
+        legend_width: int
+            width of the legend, in pixels
+
+        Returns
+        -------
+        Plot
+            Bokeh plot
+        """
+
+        # get data from database
+        mysql_con = None
+        try:
+            x = rq.weekly_priority_breakdown(self.db_connection, plot_date, interval)
+        finally:
+            if mysql_con:
+                mysql_con.close()
+
+        temp = list(x['Priority'])
+        no_blocks = map(int, list(x['No. Blocks']))
+        labels = ['P'+str(temp[i])+' - ' + str(no_blocks[i]) for i in range(0,len(temp))]
+        values = list(x['Tsec'])
+
+        # set colours for the priorities
+        colors = ['blue', '#02C8CA', 'green', 'magenta', 'red']
+
+        first_night = plot_date - timedelta(days=interval)
+        last_night = plot_date - timedelta(days=1)
+        title_txt = title.format(first_night=first_night,
+                                 last_night=last_night,
+                                 total_blocks=int(x['No. Blocks'].sum()))
+
+        return pie_chart(values=values,
+                         categories=labels,
+                         colors=colors,
+                         title=title_txt,
+                         pie_slice_label='{0:.1f} %',
+                         plot_width=plot_width,
+                         legend_width=legend_width)
 
     def total_time_breakdown(self, plot_date, interval, title, out, format='png', dpi=100):
         """Output a pie chart for the breakdown of time.
@@ -391,6 +451,62 @@ class PlotGeneration:
         pl.savefig(out, format=format, dpi=dpi)
         out.close()
 
+    def total_time_breakdown_plot(self, plot_date, interval, title, plot_width, legend_width):
+        """Generate a pie chart for the breakdown of time.
+
+         The time is summed up for all nights from the first to last night.
+
+         The plot title may contain placeholders {first_night} and {last_night}, which will be replaced with the respective
+         date in the format yyy-mm-dd, as well as the placeholder {total_night_length}, which will be replaced with the
+         total night length in seconds.
+
+         Parameters
+         ----------
+         plot_date : date
+            date for which the plot is created; this is the date when the last night ends
+         interval: int
+            number of nights to plot
+         title: string
+            plot title
+        plot_width: int
+            width of the plot, in pixels
+        legend_width: int
+            width of the legend, in pixels
+
+        Returns
+        -------
+        Plot
+            Bokeh plot
+        """
+
+        # get data from database
+        x = rq.weekly_total_time_breakdown(self.db_connection, plot_date, interval)
+
+        labels = ['Science - {}'.format(x['ScienceTime'][0]),
+                  'Engineering - {}'.format(x['EngineeringTime'][0]),
+                  'Weather - {}'.format(x['TimeLostToWeather'][0]),
+                  'Problems - {}'.format(x['TimeLostToProblems'][0])]
+
+        values = [int(x['Science']),
+                  int(x['Engineering']),
+                  int(x['Weather']),
+                  int(x['Problems'])]
+
+        colors = ['blue','#02C8CA','green','red']
+
+        first_night = plot_date - timedelta(days=interval)
+        last_night = plot_date - timedelta(days=1)
+        title_txt = title.format(first_night=first_night,
+                                 last_night=last_night,
+                                 total_night_length=x['NightLength'][0])
+
+        return pie_chart(values=values,
+                         categories=labels,
+                         colors=colors,
+                         title=title_txt,
+                         pie_slice_label='{0:.1f} %',
+                         plot_width=plot_width,
+                         legend_width=legend_width)
 
     def subsystem_breakdown(self, plot_date, interval, title, out, format='png', dpi=100):
         """Output a pie chart for the breakdown of time lost due to problems.
@@ -471,6 +587,80 @@ class PlotGeneration:
         pl.savefig(out, format=format, dpi=dpi)
         out.close()
 
+    def subsystem_breakdown_plot(self, plot_date, interval, title, plot_width, legend_width):
+        """Generate a pie chart for the breakdown of time lost due to problems.
+
+         The breakdown is shown for all nights from the first to last night.
+
+         Note that if you want the breakdown for a single night, you have to pass the same date as the first and last
+         night.
+
+         The plot title may contain placeholders {first_night} and {last_night}, which will be replaced with the
+         respective date in the format yyy-mm-dd, as well as the placeholder {total_time}, which will be replaced with
+         the total time in seconds.
+
+         Parameters
+         ----------
+         plot_date : date
+            date for which the plot is created; this is the date when the last night ends
+         interval: int
+            number of nights to plot
+         title: string
+            plot title
+        plot_width: int
+            width of the plot, in pixels
+        legend_width: int
+            width of the legend, in pixels
+
+        Returns
+        -------
+        Plot
+            Bokeh plot
+        """
+
+        fig = pl.figure(facecolor='w', figsize=[6, 6])
+        ax = fig.add_subplot(111)
+        ax.set_aspect = 0.8
+
+        # set the colours for all the subsystems:
+        subsystems_list = ['BMS', 'DOME', 'TC', 'PMAS', 'SCAM', 'TCS', 'STRUCT',
+                           'TPC', 'HRS', 'PFIS','Proposal', 'Operations',
+                           'ELS', 'ESKOM']
+        cmap = pl.cm.jet
+        colors_list = cmap(np.linspace(0.0, 1.0, len(subsystems_list)))
+        color_dict = {}
+        for i, s in enumerate(subsystems_list):
+            color_dict[s] = colors_list[i]
+
+        # get data from database
+        x = rq.weekly_subsystem_breakdown(self.db_connection, plot_date, interval)
+        y = rq.weekly_subsystem_breakdown_total(self.db_connection, plot_date, interval)
+
+        subsystem = list(x['SaltSubsystem'])
+        time = list(x['TotalTime'])
+
+        labels = [subsystem[i] + ' - ' + time[i] for i in range(0, len(subsystem))]
+        values = list(x['Time'])
+        colors = []
+        for s in subsystem:
+            color = '#{r}{g}{b}'.format(r=hex(int(round(255 * color_dict[s][0])))[2:],  # hex returns '0x...'
+                                        g=hex(int(round(255 * color_dict[s][1])))[2:],
+                                        b=hex(int(round(255 * color_dict[s][2])))[2:])
+            colors.append(color)
+
+        first_night = plot_date - timedelta(days=interval)
+        last_night = plot_date - timedelta(days=1)
+        title_txt = title.format(first_night=first_night.strftime('%Y-%m-%d'),
+                                 last_night=last_night.strftime('%Y-%m-%d'),
+                                 total_time=y['TotalTime'][0])
+
+        return pie_chart(values=values,
+                         categories=labels,
+                         colors=colors,
+                         title=title_txt,
+                         plot_width=plot_width,
+                         legend_width=legend_width,
+                         pie_slice_label='{0:.1f} %')
 
     def time_breakdown(self, plot_date, interval, title, out, format='png', dpi=100):
         """Output a stacked bar plot of the time breakdown.
@@ -576,6 +766,65 @@ class PlotGeneration:
         pl.savefig(out, format=format, dpi=dpi)
         out.close()
 
+    def time_breakdown_plot(self, plot_date, interval, title, plot_width, plot_height):
+        """Output a stacked bar plot of the time breakdown.
+
+         The breakdown is shown for all nights from the first to last night. The output target for the plot may either be
+         specified by a file path or supplied as a file-like object. (Technically, the oputput target can be any object
+         accepted by Matplotlib as an output target.)
+
+         Note that if you want the breakdown for a single night, you have to pass the same date as the first and last night.
+
+         The plot title may contain placeholders {first_night} and {last_night}, which will be replaced with the respective
+         date in the format yyy-mm-dd.
+
+         Parameters
+         ----------
+         plot_date : date
+            date for which the plot is created; this is the date when the last night ends
+         interval: int
+            number of nights to plot
+         title: string
+            plot title
+        plot_width: int
+            width of the plot, in pixels
+        plot_height: int
+            height of the plot, in pixels
+
+        Returns
+        -------
+        Plot
+            Bokeh plot
+        """
+
+        # get data from database
+        data = rq.weekly_time_breakdown(self.db_connection, plot_date, interval)
+        dates = [d.strftime('%a, %Y-%m-%d') for d in data['Date'].values]
+        keys = ('Science', 'Engineering', 'Weather', 'Problems')
+        values = OrderedDict()
+        for i, _ in enumerate(dates):
+            for key in keys:
+                if key not in values:
+                    values[key] = []
+                values[key].append(data[key][i])
+
+        colors = ['blue', '#02C8CA', 'green', 'red']
+
+        first_night = plot_date - timedelta(days=interval)
+        last_night = plot_date - timedelta(days=1)
+        title_txt = title.format(first_night=first_night.strftime('%Y-%m-%d'),
+                                 last_night=last_night.strftime('%Y-%m-%d'))
+
+        return stacked_bar_chart(values=values,
+                         categories=dates,
+                         colors=colors,
+                         x_label='Date',
+                         y_label='Hours',
+                         title=title_txt,
+                         plot_width=plot_width,
+                         plot_height=plot_height,
+                         legend_height=150)
+
 
 if __name__ == '__main__':
     def generate_plots():
@@ -587,26 +836,34 @@ if __name__ == '__main__':
         first_night_txt = first_night.strftime('%Y%m%d')
         last_night_txt = last_night.strftime('%Y%m%d')
 
+        from bokeh.plotting import output_file, show
+        output_file('plots.html')
+
         # testing the pie_chart method
         with PlotGeneration(db='sdb_v6',
                             db_user=os.environ['SDBUSER'],
                             db_password=os.environ['SDBPASS'],
                             db_host='devsdb') as pg:
-             pg.priority_breakdown(plot_date=plotdate,
-                                      interval=my_interval,
-                                      title='Weekly Priority Breakdown - {total_blocks} Blocks Total' + '\n {first_night} - {last_night}',
-                                      out='priority_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt))
-             pg.total_time_breakdown(plot_date=plotdate,
+            show(pg.time_breakdown_plot(plot_date=plotdate,
                                         interval=my_interval,
-                                        title='Weekly Time Breakdown - {total_night_length} Total\n{first_night} - {last_night}',
-                                        out='total_time_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt))
-             pg.subsystem_breakdown(plot_date=plotdate,
+                                        title='Weekly Time Breakdown - {first_night} - {last_night}',
+                                        plot_width=600,
+                                        plot_height=600))
+            pg.priority_breakdown(plot_date=plotdate,
+                                  interval=my_interval,
+                                  title='Weekly Priority Breakdown - {total_blocks} Blocks Total' + '\n {first_night} - {last_night}',
+                                  out='priority_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt))
+            pg.total_time_breakdown(plot_date=plotdate,
                                     interval=my_interval,
-                                    title='Weekly Problems Breakdown - {total_time}\n{first_night} - {last_night}',
-                                    out='subsystem_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt))
-             pg.time_breakdown(plot_date=plotdate,
-                               interval=my_interval,
-                               title='Weekly Time Breakdown - {first_night} - {last_night}',
-                               out='time_breakdown_{}-{}.png'.format(first_night_txt, last_night_txt))
+                                    title='Weekly Time Breakdown - {total_night_length} Total\n{first_night} - {last_night}',
+                                    out='total_time_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt))
+            pg.subsystem_breakdown(plot_date=plotdate,
+                                interval=my_interval,
+                                title='Weekly Problems Breakdown - {total_time}\n{first_night} - {last_night}',
+                                out='subsystem_breakdown_pie_chart_{}-{}.png'.format(first_night_txt, last_night_txt))
+            pg.time_breakdown(plot_date=plotdate,
+                           interval=my_interval,
+                           title='Weekly Time Breakdown - {first_night} - {last_night}',
+                           out='time_breakdown_{}-{}.png'.format(first_night_txt, last_night_txt))
 
     generate_plots()

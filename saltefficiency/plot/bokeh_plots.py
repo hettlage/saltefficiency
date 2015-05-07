@@ -1,12 +1,12 @@
 import math
 import numpy as np
-from bokeh.models import DataRange1d, GridPlot, Plot, PreviewSaveTool
+from bokeh.charts import Bar
+from bokeh.models import DataRange1d, GridPlot, Plot, PreviewSaveTool, Range1d
 from bokeh.models.glyphs import AnnularWedge, Rect, Text
 from bokeh.plotting import ColumnDataSource, output_file, show
-from collections import OrderedDict
 
 
-def pie_chart(values, categories, colors, title, pie_radius, legend_width, pie_slice_label=None):
+def pie_chart(values, categories, colors, title, plot_width, legend_width, pie_slice_label=None):
     r"""Generate a pie chart.
 
     Generate a pie chart using the Bokeh library.
@@ -28,8 +28,8 @@ def pie_chart(values, categories, colors, title, pie_radius, legend_width, pie_s
         Colors corresponding to the categories.
     title: str
         Plot title.
-    pie_radius: int
-        Radius of the pie, in pixels.
+    plot_width: int
+        Width of the plot, in pixels.
     legend_width: int
         Width of the legend, in pixels.
     pie_slice_label: str, optional
@@ -37,7 +37,7 @@ def pie_chart(values, categories, colors, title, pie_radius, legend_width, pie_s
 
     Returns
     -------
-    Figure
+    Plot
         Bokeh plot containing the pie chart and its legend.
 
     Raises
@@ -52,13 +52,19 @@ def pie_chart(values, categories, colors, title, pie_radius, legend_width, pie_s
     key_color_height = 16
     text_font = 'times'
     text_font_size = '13pt'
+    plot_border = 10
+    pie_legend_gap = 20
+    legend_bottom_margin = 20
 
-    # convert values to angles and percentages
+    # check that arguments are fine
     if len(values) != len(colors) or len(colors) != len(categories):
         raise ValueError('the number of values, colors and categories don\'t match')
     for v in values:
         if v < 0:
             raise ValueError('values must be non-negative: {0}'.format(v))
+
+
+# convert values to angles and percentages
     angles = normalize(values, 2 * math.pi)
     percentages = normalize(values, 100.)
 
@@ -78,8 +84,8 @@ def pie_chart(values, categories, colors, title, pie_radius, legend_width, pie_s
     mid_angles = 0.5 * (start_angles + end_angles)
 
     # plot dimensions
-    title_height = 45 if title else 0
-    plot_height = 20 + 2 * pie_radius + title_height
+    pie_radius = (plot_width - 2 * plot_border - legend_width - pie_legend_gap) / 2
+    plot_height = 20 + 2 * pie_radius
     plot_width = 20 + 2 * pie_radius + legend_width
 
     # create plot
@@ -88,9 +94,10 @@ def pie_chart(values, categories, colors, title, pie_radius, legend_width, pie_s
     plot = Plot(
         x_range=xdr,
         y_range=ydr,
-        title=title,
-        background_fill="#efe8e2",
+        title=None,
+        background_fill="white",
         border_fill='white',
+        outline_line_color='white',
         min_border=2,
         plot_width=plot_width,
         plot_height=plot_height)
@@ -99,7 +106,7 @@ def pie_chart(values, categories, colors, title, pie_radius, legend_width, pie_s
     # create pie slices
     inner_radius = 0
     outer_radius = pie_radius
-    pie_center = (10 + outer_radius, 10 + outer_radius)
+    pie_center = (plot_border + outer_radius, plot_border + outer_radius)
     source = ColumnDataSource(
         data=dict(
             x=pie_center[0] * np.ones(len(data)),
@@ -145,8 +152,8 @@ def pie_chart(values, categories, colors, title, pie_radius, legend_width, pie_s
         plot.add_glyph(label_source, t)
 
     # create the legend colors
-    xs_legends = np.array([pie_center[0] + pie_radius + 20 + key_color_width / 2 for _ in range(len(data))])
-    ys_legends = np.array([pie_center[1] - pie_radius + 20 + 30 * i + key_color_height / 2 for i in range(len(data))])
+    xs_legends = np.array([pie_center[0] + pie_radius + pie_legend_gap + key_color_width / 2 for _ in range(len(data))])
+    ys_legends = np.array([pie_center[1] - pie_radius + legend_bottom_margin + 30 * i + key_color_height / 2 for i in range(len(data))])
     legend_color_width = 30
     legend_color_height = 15
     key_color_source = ColumnDataSource(
@@ -165,7 +172,6 @@ def pie_chart(values, categories, colors, title, pie_radius, legend_width, pie_s
              line_color=dict(field='fill_color'),
              fill_color=dict(field='fill_color'))
     plot.add_glyph(key_color_source, r)
-    plot.add_tools()
 
     # create the legend labels
     key_label_source = ColumnDataSource(
@@ -185,10 +191,166 @@ def pie_chart(values, categories, colors, title, pie_radius, legend_width, pie_s
              text_baseline='middle')
     plot.add_glyph(key_label_source, t)
 
+    # title plot
+    t_plot = title_plot(title, plot_width)
+
     # create a grid plot
     # we do this as grid plots don't feature the Bokeh logo and display the tool icons on the side
-    grid = GridPlot(children=[[plot]], title="iris_splom")
+    grid = GridPlot(children=[[t_plot], [plot]], title=None)
     return grid
+
+
+def stacked_bar_chart(values, categories, colors, x_label, y_label, title, plot_width, plot_height, legend_height):
+    r"""Generate a stacked bar chart.
+
+    Generate a stacked bar chart with the Bokeh library.
+
+    The values must be a dictionary of lists. For example,
+
+    values = dict(engineering=[1.2, 7.8, 3.8],
+                  science=[10., 2.5])
+
+    The number of keys for this dictionary must equal the number of colors.
+
+    The categories will be used as the labels for the x axis.
+
+    The legend height is an estimate of the vertical space required for the legend, in pixels. It is used to ensure that
+    the legend isn't plotted on top of a bar.
+
+    Parameters
+    ----------
+    values : array_like
+        Values to plot on the pie chart. Values that are zero will be ignored.
+    categories: array_like
+        Categories corresponding to the values. These will be used in the legend.
+    colors: array_like
+        Colors corresponding to the categories.
+    x_label: str
+        Label for the x axis.
+    y_label: str
+        Label for the y axis.
+    title: str
+        Plot title.
+    plot_width: int
+        Width of the plot, in pixels.
+    legend_height: int
+        Height of the legend, in pixels.
+
+    Returns
+    -------
+    Plot
+        Bokeh plot.
+
+    Raises
+    ------
+    ValueError
+        If the number of colors and keys in `values` don't match, or if any value is negative, or if the legend height
+        isn't smaller than the plot height.
+    """
+
+    # check that arguments are fine
+    if len(values.keys()) != len(colors):
+        raise ValueError('the number of value keys and colors don\'t match')
+    for key in values:
+        for v in values[key]:
+            if v < 0:
+                raise ValueError('all values must be non-negative')
+    if legend_height >= plot_height:
+        raise ValueError('the legend height must be smaller than the plot height')
+
+    # ensure there is space for the legend
+    max_value = max([sum([values[key][i] for key in values.keys()]) for i in range(len(values.keys()[0]))])
+    max_y = max_value * plot_height / (plot_height - legend_height)
+    ydr = Range1d(start=0, end=max_y)
+
+    # bar plot
+    plot = Bar(values=values,
+               cat=categories,
+               palette=colors,
+               stacked=True,
+               legend=True,
+               xlabel=x_label,
+               ylabel=y_label,
+               title=None,
+               width=plot_width,
+               height=plot_height,
+               continuous_range=ydr)
+
+    # title plot
+    t_plot = title_plot(title, plot_width)
+
+    # create a grid plot
+    # we do this as grid plots don't feature the Bokeh logo and display the tool icons on the side
+    grid = GridPlot(children=[[t_plot], [plot]], title=None)
+    return grid
+
+def title_plot(title, width):
+    r"""Generate a plot just containing a title.
+
+    The generated plot just contains a title. The title may contain newline characters.
+
+    Parameters
+    ----------
+    title : str
+        Title.
+    width: int
+        Plot width, in pixels
+
+    Returns
+    -------
+    Plot
+        Bokeh plot containing the title.
+    describe : type
+        Explanation of return value named `describe`.
+    out : type
+        Explanation of `out`.
+    """
+
+    # layout choices
+    plot_border = 5
+    line_height = 30
+    text_font = 'times'
+    text_font_size = '14pt'
+
+    # figure out the text position and plot height
+    lines = [line for line in reversed(title.split('\n'))]
+    line_xs = [width / 2 for _ in range(len(lines))]
+    line_ys = [plot_border + i * line_height for i, _ in enumerate(lines)]
+    height = 2 * plot_border + len(lines) * line_height
+
+    # create the plot
+    xdr = DataRange1d(start=0, end=1)
+    ydr = DataRange1d(start=0, end=1)
+    plot = Plot(x_range=xdr,
+                y_range=ydr,
+                title=None,
+                background_fill="white",
+                border_fill='white',
+                outline_line_color='white',
+                min_border=2,
+                plot_width=width,
+                plot_height=height)
+    plot.add_tools(PreviewSaveTool())
+
+    # add the title
+    source = ColumnDataSource(
+        data=dict(
+            x=line_xs,
+            y=line_ys,
+            text=lines
+        )
+    )
+    t = Text(x=dict(field='x', units='screen'),
+             y=dict(field='y', units='screen'),
+             text=dict(field='text', screen='units'),
+             text_font=text_font,
+             text_font_size=text_font_size,
+             text_color='black',
+             text_align='center',
+             text_baseline='bottom')
+    plot.add_glyph(source, t)
+
+    return plot
 
 
 def normalize(values, normalized_total):
@@ -243,3 +405,15 @@ def normalize(values, normalized_total):
 
     # normalize
     return [normalized_total * v / total for v in values]
+
+
+if __name__ == '__main__':
+    output_file('plots.html')
+    from collections import OrderedDict
+    values = OrderedDict()
+    values['python'] = [2, 7]
+    values['pypi'] = [8, 0]
+    values['java'] = [15, 5]
+    categories = ['2014', '2015']
+    colors = ['#AA6612', '#00FF00', '#FE6712']
+    show(stacked_bar_chart(values, categories, colors, 'Year', 'Amount', 'Programming', 700, 700))
