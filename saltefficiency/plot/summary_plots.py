@@ -764,11 +764,11 @@ def time_breakdown_plot(db_connection, plot_date, interval, title, plot_width, p
                              last_night=last_night.strftime('%Y-%m-%d'))
 
     return stacked_bar_chart(values=values,
-                     categories=dates,
-                     colors=colors,
-                     x_label='Date',
-                     y_label='Hours',
-                     title=title_txt,
-                     plot_width=plot_width,
-                     plot_height=plot_height,
-                     legend_height=150)
+                             categories=dates,
+                             colors=colors,
+                             x_label='Date',
+                             y_label='Hours',
+                             title=title_txt,
+                             plot_width=plot_width,
+                             plot_height=plot_height,
+                             legend_height=150)
