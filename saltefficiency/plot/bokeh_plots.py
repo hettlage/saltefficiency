@@ -406,15 +406,3 @@ def normalize(values, normalized_total):
 
     # normalize
     return [normalized_total * v / total for v in values]
-
-
-if __name__ == '__main__':
-    output_file('plots.html')
-    from collections import OrderedDict
-    values = OrderedDict()
-    values['python'] = [2, 7]
-    values['pypi'] = [8, 0]
-    values['java'] = [15, 5]
-    categories = ['2014', '2015']
-    colors = ['#AA6612', '#00FF00', '#FE6712']
-    show(stacked_bar_chart(values, categories, colors, 'Year', 'Amount', 'Programming', 700, 700))
