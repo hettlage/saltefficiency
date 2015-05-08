@@ -58,9 +58,7 @@ Specifying a date and a range in days to query in the past:
 '''
 
 import sys
-import os
 import getopt
-import MySQLdb
 import matplotlib.pyplot as pl
 import saltefficiency.util.report_queries as rq
 import numpy as np
