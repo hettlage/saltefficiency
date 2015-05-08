@@ -275,6 +275,7 @@ def stacked_bar_chart(values, categories, colors, x_label, y_label, title, plot_
                width=plot_width,
                height=plot_height,
                continuous_range=ydr)
+    plot.add_tools(PreviewSaveTool())
 
     # title plot
     t_plot = title_plot(title, plot_width)
