@@ -583,11 +583,20 @@ def subsystem_breakdown_plot(db_connection, plot_date, interval, title, plot_wid
 
     labels = [subsystem[i] + ' - ' + time[i] for i in range(0, len(subsystem))]
     values = list(x['Time'])
+
+    # choose colors
     colors = []
     for s in subsystem:
-        color = '#{r}{g}{b}'.format(r=hex(int(round(255 * color_dict[s][0])))[2:],  # hex returns '0x...'
-                                    g=hex(int(round(255 * color_dict[s][1])))[2:],
-                                    b=hex(int(round(255 * color_dict[s][2])))[2:])
+        r = hex(int(round(255 * color_dict[s][0])))[2:]  # hex returns '0x...'
+        if len(r) < 2:
+            r = '0' + r
+        g = hex(int(round(255 * color_dict[s][1])))[2:]
+        if len(g) < 2:
+            g = '0' + g
+        b = hex(int(round(255 * color_dict[s][2])))[2:]
+        if len(b) < 2:
+            b = '0' + b
+        color = '#{r}{g}{b}'.format(r=r, g=g, b=b)
         colors.append(color)
 
     first_night = plot_date - timedelta(days=interval)
@@ -710,27 +719,28 @@ def time_breakdown(db_connection, plot_date, interval, title, out, format='png',
     pl.savefig(out, format=format, dpi=dpi)
     out.close()
 
-def time_breakdown_plot(db_connection, plot_date, interval, title, plot_width, plot_height):
+
+def time_breakdown_plot(db_connection, plot_date, interval, title, plot_width, plot_height, legend_height):
     """Output a stacked bar plot of the time breakdown.
 
-     The breakdown is shown for all nights from the first to last night. The output target for the plot may either be
-     specified by a file path or supplied as a file-like object. (Technically, the oputput target can be any object
-     accepted by Matplotlib as an output target.)
+    The breakdown is shown for all nights from the first to last night. The output target for the plot may either be
+    specified by a file path or supplied as a file-like object. (Technically, the oputput target can be any object
+    accepted by Matplotlib as an output target.)
 
-     Note that if you want the breakdown for a single night, you have to pass the same date as the first and last night.
+    Note that if you want the breakdown for a single night, you have to pass the same date as the first and last night.
 
-     The plot title may contain placeholders {first_night} and {last_night}, which will be replaced with the respective
-     date in the format yyy-mm-dd.
+    The plot title may contain placeholders {first_night} and {last_night}, which will be replaced with the respective
+    date in the format yyy-mm-dd.
 
-     Parameters
-     ----------
-     db_connection: SQLAlchemy engine or database connection
+    Parameters
+    ----------
+    db_connection: SQLAlchemy engine or database connection
         Any database connection supported by Pandas can be used.
-     plot_date : date
+    plot_date : date
         date for which the plot is created; this is the date when the last night ends
-     interval: int
+    interval: int
         number of nights to plot
-     title: string
+    title: string
         plot title
     plot_width: int
         width of the plot, in pixels
