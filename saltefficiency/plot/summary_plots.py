@@ -304,8 +304,8 @@ def priority_breakdown_plot(db_connection, plot_date, interval, title, plot_widt
 
     first_night = plot_date - timedelta(days=interval)
     last_night = plot_date - timedelta(days=1)
-    title_txt = title.format(first_night=first_night,
-                             last_night=last_night,
+    title_txt = title.format(first_night=first_night.strftime('%Y-%m-%d'),
+                             last_night=last_night.strftime('%Y-%m-%d'),
                              total_blocks=int(x['No. Blocks'].sum()))
 
     return pie_chart(values=values,
@@ -434,8 +434,8 @@ def total_time_breakdown_plot(db_connection, plot_date, interval, title, plot_wi
 
     first_night = plot_date - timedelta(days=interval)
     last_night = plot_date - timedelta(days=1)
-    title_txt = title.format(first_night=first_night,
-                             last_night=last_night,
+    title_txt = title.format(first_night=first_night.strftime('%Y-%m-%d'),
+                             last_night=last_night.strftime('%Y-%m-%d'),
                              total_night_length=x['NightLength'][0])
 
     return pie_chart(values=values,
