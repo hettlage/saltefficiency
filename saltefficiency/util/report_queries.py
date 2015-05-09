@@ -144,7 +144,7 @@ def weekly_subsystem_breakdown(mysql_con, date, interval=7):
 
 
     wsb = pd.read_sql_query('''SELECT SaltSubsystem,
-    TIME_FORMAT(SEC_TO_TIME(SUM(TimeLost)),'%Hh%im') as "TotalTime",
+    TIME_FORMAT(SEC_TO_TIME(SUM(TimeLost)),'%%Hh%%im') as "TotalTime",
     SUM(TimeLost) as "Time"
     FROM Fault JOIN NightInfo USING (NightInfo_Id)
     JOIN SaltSubsystem USING (SaltSubsystem_Id)
@@ -162,7 +162,7 @@ def weekly_subsystem_breakdown_total(mysql_con, date, interval=7):
     '''
 
     wsbt = pd.read_sql_query('''SELECT SaltSubsystem,
-    TIME_FORMAT(SEC_TO_TIME(SUM(TimeLost)),'%Hh%im') as "TotalTime",
+    TIME_FORMAT(SEC_TO_TIME(SUM(TimeLost)),'%%Hh%%im') as "TotalTime",
     SUM(TimeLost) as "Time"
     FROM Fault JOIN NightInfo USING (NightInfo_Id)
     JOIN SaltSubsystem USING (SaltSubsystem_Id)
