@@ -21,7 +21,7 @@ def date_range(mysql_con, date, interval=7):
     report heading and building the filename
     '''
 
-    dr = pd.read_sql('''SELECT DATE_SUB(DATE('{}'), INTERVAL {} DAY) as StartDate,
+    dr = pd.read_sql_query('''SELECT DATE_SUB(DATE('{}'), INTERVAL {} DAY) as StartDate,
     DATE_SUB(DATE('{}'), INTERVAL 1 DAY) as  EndDate;
     '''.format(date, interval, date), con=mysql_con)
 
@@ -34,8 +34,8 @@ def weekly_priority_breakdown(mysql_con, date, interval=7):
     observed and total time spent per priority for the last week.
     '''
 
-    wpb = pd.read_sql('''SELECT Priority, Sum(Accepted) as "No. Blocks",
-    TIME_FORMAT(SEC_TO_TIME(sum(ObsTime)), '%Hh%im') as "Total Time",
+    wpb = pd.read_sql_query('''SELECT Priority, Sum(Accepted) as "No. Blocks",
+    TIME_FORMAT(SEC_TO_TIME(sum(ObsTime)), '%%Hh%%im') as "Total Time",
     sum(ObsTime) as "Tsec"
     FROM Block
     JOIN BlockVisit USING (Block_Id)
@@ -52,12 +52,12 @@ def lastnight_time_breakdown(mysql_con, date, interval=7):
     this function returns the time breakdown for last night's observations
     '''
 
-    ltb = pd.read_sql('''SELECT Date,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToWeather)), 0),'%Hh%im') `TimeLostToWeather`,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToProblems)), 0),'%Hh%im') `TimeLostToProblems`,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(EngineeringTime)), 0),'%Hh%im') `EngineeringTime`,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(ScienceTime)), 0),'%Hh%im') `ScienceTime`,
-    TIME_FORMAT(SEC_TO_TIME(SUM(TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart))), '%Hh%im') as NightLength,
+    ltb = pd.read_sql_query('''SELECT Date,
+    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToWeather)), 0),'%%Hh%%im') `TimeLostToWeather`,
+    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToProblems)), 0),'%%Hh%%im') `TimeLostToProblems`,
+    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(EngineeringTime)), 0),'%%Hh%%im') `EngineeringTime`,
+    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(ScienceTime)), 0),'%%Hh%%im') `ScienceTime`,
+    TIME_FORMAT(SEC_TO_TIME(SUM(TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart))), '%%Hh%%im') as NightLength,
     IFNULL(SUM(TimeLostToWeather), 0) `Weather`,
     IFNULL(SUM(TimeLostToProblems), 0) `Problems`,
     IFNULL(SUM(EngineeringTime), 0) `Engineering`,
@@ -76,7 +76,7 @@ def weekly_time_breakdown(mysql_con, date, interval=7):
     this function returns the time breakdown for the past week'ss observations
     per night.
     '''
-    wtb = pd.read_sql('''SELECT Date,
+    wtb = pd.read_sql_query('''SELECT Date,
     IFNULL(SEC_TO_TIME(TimeLostToWeather), 0) `TimeLostToWeather`,
     IFNULL(SEC_TO_TIME(TimeLostToProblems), 0) `TimeLostToProblems`,
     IFNULL(SEC_TO_TIME(EngineeringTime), 0) `EngineeringTime`,
@@ -101,13 +101,13 @@ def weekly_total_time_breakdown(mysql_con, date, interval=7):
     observations.
     '''
 
-    wttb = pd.read_sql('''SELECT DATE_SUB(DATE(NOW()), INTERVAL 7 DAY) as StartDate,
+    wttb = pd.read_sql_query('''SELECT DATE_SUB(DATE(NOW()), INTERVAL 7 DAY) as StartDate,
     DATE_SUB(DATE(NOW()), INTERVAL 1 DAY) as  EndDate,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToWeather)), 0),'%Hh%im') `TimeLostToWeather`,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToProblems)), 0),'%Hh%im') `TimeLostToProblems`,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(EngineeringTime)), 0),'%Hh%im') `EngineeringTime`,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(ScienceTime)), 0),'%Hh%im') `ScienceTime`,
-    TIME_FORMAT(SEC_TO_TIME(SUM(TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart))), '%Hh%im') as NightLength,
+    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToWeather)), 0),'%%Hh%%im') `TimeLostToWeather`,
+    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToProblems)), 0),'%%Hh%%im') `TimeLostToProblems`,
+    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(EngineeringTime)), 0),'%%Hh%%im') `EngineeringTime`,
+    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(ScienceTime)), 0),'%%Hh%%im') `ScienceTime`,
+    TIME_FORMAT(SEC_TO_TIME(SUM(TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart))), '%%Hh%im') as NightLength,
     IFNULL(SUM(TimeLostToWeather), 0) `Weather`,
     IFNULL(SUM(TimeLostToProblems), 0) `Problems`,
     IFNULL(SUM(EngineeringTime), 0) `Engineering`,
@@ -125,7 +125,7 @@ def lastnight_subsystem_breakdown(mysql_con, date, interval=7):
     this function returns the subsystem time breakdown for problems last night
     '''
 
-    lsb = pd.read_sql('''SELECT SaltSubsystem,
+    lsb = pd.read_sql_query('''SELECT SaltSubsystem,
     SEC_TO_TIME(SUM(TimeLost)) as "TimeLost",
     SUM(TimeLost) as "Time"
     FROM Fault JOIN NightInfo USING (NightInfo_Id) JOIN SaltSubsystem USING (SaltSubsystem_Id)
@@ -143,7 +143,7 @@ def weekly_subsystem_breakdown(mysql_con, date, interval=7):
     '''
 
 
-    wsb = pd.read_sql('''SELECT SaltSubsystem,
+    wsb = pd.read_sql_query('''SELECT SaltSubsystem,
     TIME_FORMAT(SEC_TO_TIME(SUM(TimeLost)),'%Hh%im') as "TotalTime",
     SUM(TimeLost) as "Time"
     FROM Fault JOIN NightInfo USING (NightInfo_Id)
@@ -161,7 +161,7 @@ def weekly_subsystem_breakdown_total(mysql_con, date, interval=7):
     during the past week's observations.
     '''
 
-    wsbt = pd.read_sql('''SELECT SaltSubsystem,
+    wsbt = pd.read_sql_query('''SELECT SaltSubsystem,
     TIME_FORMAT(SEC_TO_TIME(SUM(TimeLost)),'%Hh%im') as "TotalTime",
     SUM(TimeLost) as "Time"
     FROM Fault JOIN NightInfo USING (NightInfo_Id)
