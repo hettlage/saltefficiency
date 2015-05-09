@@ -769,4 +769,4 @@ def time_breakdown_plot(db_connection, plot_date, interval, title, plot_width, p
                              title=title_txt,
                              plot_width=plot_width,
                              plot_height=plot_height,
-                             legend_height=150)
+                             legend_height=legend_height)
