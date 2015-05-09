@@ -107,7 +107,7 @@ def weekly_total_time_breakdown(mysql_con, date, interval=7):
     TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToProblems)), 0),'%%Hh%%im') `TimeLostToProblems`,
     TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(EngineeringTime)), 0),'%%Hh%%im') `EngineeringTime`,
     TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(ScienceTime)), 0),'%%Hh%%im') `ScienceTime`,
-    TIME_FORMAT(SEC_TO_TIME(SUM(TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart))), '%%Hh%im') as NightLength,
+    TIME_FORMAT(SEC_TO_TIME(SUM(TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart))), '%%Hh%%im') as NightLength,
     IFNULL(SUM(TimeLostToWeather), 0) `Weather`,
     IFNULL(SUM(TimeLostToProblems), 0) `Problems`,
     IFNULL(SUM(EngineeringTime), 0) `Engineering`,
