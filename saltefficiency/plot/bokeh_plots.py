@@ -123,8 +123,8 @@ def pie_chart(values, categories, colors, title, plot_width, legend_width, pie_s
                      y=dict(field='y', units='screen'),
                      inner_radius=dict(field='inner_radius', units='screen'),
                      outer_radius=dict(field='outer_radius', units='screen'),
-                     start_angle=dict(field='start_angle', units='screen'),
-                     end_angle=dict(field='end_angle', units='screen'),
+                     start_angle=dict(field='start_angle'),
+                     end_angle=dict(field='end_angle'),
                      fill_color=dict(field='fill_color'),
                      line_color='white')
     plot.add_glyph(source, a)
