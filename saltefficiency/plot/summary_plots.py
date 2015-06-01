@@ -300,7 +300,8 @@ def priority_breakdown_plot(db_connection, plot_date, interval, title, plot_widt
     values = list(x['Tsec'])
 
     # set colours for the priorities
-    colors = ['blue', '#02C8CA', 'green', 'magenta', 'red']
+    priority_colors = ['blue', '#02C8CA', 'green', 'magenta', 'red']
+    colors = [priority_colors[i] for i in temp]
 
     first_night = plot_date - timedelta(days=interval)
     last_night = plot_date - timedelta(days=1)
