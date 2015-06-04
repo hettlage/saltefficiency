@@ -315,7 +315,8 @@ def priority_breakdown_plot(db_connection, plot_date, interval, title, plot_widt
                      title=title_txt,
                      pie_slice_label='{0:.1f} %',
                      plot_width=plot_width,
-                     legend_width=legend_width)
+                     legend_width=legend_width,
+                     text_color='white')
 
 def total_time_breakdown(db_connection, plot_date, interval, title, out, format='png', dpi=100):
     """Output a pie chart for the breakdown of time.
@@ -445,7 +446,8 @@ def total_time_breakdown_plot(db_connection, plot_date, interval, title, plot_wi
                      title=title_txt,
                      pie_slice_label='{0:.1f} %',
                      plot_width=plot_width,
-                     legend_width=legend_width)
+                     legend_width=legend_width,
+                     text_color='white')
 
 def subsystem_breakdown(db_connection, plot_date, interval, title, out, format='png', dpi=100):
     """Output a pie chart for the breakdown of time lost due to problems.
@@ -612,7 +614,8 @@ def subsystem_breakdown_plot(db_connection, plot_date, interval, title, plot_wid
                      title=title_txt,
                      plot_width=plot_width,
                      legend_width=legend_width,
-                     pie_slice_label='{0:.1f} %')
+                     pie_slice_label='{0:.1f} %',
+                     text_color='black')
 
 def time_breakdown(db_connection, plot_date, interval, title, out, format='png', dpi=100):
     """Output a stacked bar plot of the time breakdown.
