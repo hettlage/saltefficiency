@@ -6,7 +6,7 @@ from bokeh.models.glyphs import AnnularWedge, Rect, Text
 from bokeh.plotting import ColumnDataSource, output_file, show
 
 
-def pie_chart(values, categories, colors, title, plot_width, legend_width, pie_slice_label=None):
+def pie_chart(values, categories, colors, title, plot_width, legend_width, text_color, pie_slice_label=None):
     r"""Generate a pie chart.
 
     Generate a pie chart using the Bokeh library.
@@ -63,8 +63,7 @@ def pie_chart(values, categories, colors, title, plot_width, legend_width, pie_s
         if v < 0:
             raise ValueError('values must be non-negative: {0}'.format(v))
 
-
-# convert values to angles and percentages
+    # convert values to angles and percentages
     angles = normalize(values, 2 * math.pi)
     percentages = normalize(values, 100.)
 
@@ -146,7 +145,7 @@ def pie_chart(values, categories, colors, title, plot_width, legend_width, pie_s
                  text=dict(field='text', units='screen'),
                  text_font=text_font,
                  text_font_size=text_font_size,
-                 text_color='white',
+                 text_color=text_color,
                  text_align='center',
                  text_baseline='middle')
         plot.add_glyph(label_source, t)
