@@ -608,6 +608,12 @@ def subsystem_breakdown_plot(db_connection, plot_date, interval, title, plot_wid
                              last_night=last_night.strftime('%Y-%m-%d'),
                              total_time=y['TotalTime'][0])
 
+    # there must be at least one value for a pie chart
+    if not values:
+        values = [1]
+        labels = ['no technical downtime']
+        colors = ['#f0f0f0']
+
     return pie_chart(values=values,
                      categories=labels,
                      colors=colors,
