@@ -129,7 +129,7 @@ def lastnight_subsystem_breakdown(mysql_con, date, interval=7):
     SEC_TO_TIME(SUM(TimeLost)) as "TimeLost",
     SUM(TimeLost) as "Time"
     FROM Fault JOIN NightInfo USING (NightInfo_Id) JOIN SaltSubsystem USING (SaltSubsystem_Id)
-    WHERE Timelost IS NOT NULL AND DATE(Date) =  DATE_SUB(DATE('{}'), INTERVAL 1 DAY) GROUP BY SaltSubsystem;
+    WHERE Fault.Deleted=0 AND Timelost IS NOT NULL AND DATE(Date) =  DATE_SUB(DATE('{}'), INTERVAL 1 DAY) GROUP BY SaltSubsystem;
     '''.format(date), con=mysql_con)
 
     return lsb
@@ -148,7 +148,7 @@ def weekly_subsystem_breakdown(mysql_con, date, interval=7):
     SUM(TimeLost) as "Time"
     FROM Fault JOIN NightInfo USING (NightInfo_Id)
     JOIN SaltSubsystem USING (SaltSubsystem_Id)
-    WHERE Timelost IS NOT NULL
+    WHERE Fault.Deleted=0 Timelost IS NOT NULL
     AND Date BETWEEN DATE_SUB(DATE('{}'), INTERVAL {} DAY)
     AND DATE_SUB(DATE('{}'), INTERVAL 1 DAY) GROUP BY SaltSubsystem;
     '''.format(date, interval, date), con=mysql_con)
@@ -166,7 +166,7 @@ def weekly_subsystem_breakdown_total(mysql_con, date, interval=7):
     SUM(TimeLost) as "Time"
     FROM Fault JOIN NightInfo USING (NightInfo_Id)
     JOIN SaltSubsystem USING (SaltSubsystem_Id)
-    WHERE Timelost IS NOT NULL
+    WHERE Fault.Deleted=0 Timelost IS NOT NULL
     AND Date BETWEEN DATE_SUB(DATE('{}'), INTERVAL {} DAY)
     AND DATE_SUB(DATE('{}'), INTERVAL 1 DAY);
     '''.format(date, interval, date), con=mysql_con)
