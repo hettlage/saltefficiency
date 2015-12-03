@@ -57,6 +57,7 @@ Specifying a date and a range in days to query in the past:
                                  history for the query
 '''
 
+import math
 import sys
 import getopt
 import matplotlib.pyplot as pl
@@ -110,7 +111,7 @@ def parse_commandline(argv):
     # read command line options
     try:
         opts,args = getopt.getopt(argv,"hs:e:d:i:",
-                ["help","startdate=","enddate=", "date=","interval="])
+                                  ["help","startdate=","enddate=", "date=","interval="])
     except getopt.GetoptError, inst:
         print inst
         print 'Use --help to get a list of options'
@@ -354,10 +355,10 @@ def total_time_breakdown(db_connection, plot_date, interval, title, out, format=
     # get data from database
     x = rq.weekly_total_time_breakdown(db_connection, plot_date, interval)
 
-    labels = ['Science - {}'.format(x['ScienceTime'][0]),
-              'Engineering - {}'.format(x['EngineeringTime'][0]),
-              'Weather - {}'.format(x['TimeLostToWeather'][0]),
-              'Problems - {}'.format(x['TimeLostToProblems'][0])]
+    labels = ['Science - {}'.format(format_hh_mm(x['Science'][0])),
+              'Engineering - {}'.format(format_hh_mm(x['Engineering'][0])),
+              'Weather - {}'.format(format_hh_mm(x['Weather'][0])),
+              'Problems - {}'.format(format_hh_mm(x['Problems'][0]))]
 
     values = [int(x['Science']),
               int(x['Engineering']),
@@ -422,10 +423,10 @@ def total_time_breakdown_plot(db_connection, plot_date, interval, title, plot_wi
     # get data from database
     x = rq.weekly_total_time_breakdown(db_connection, plot_date, interval)
 
-    labels = ['Science - {}'.format(x['ScienceTime'][0]),
-              'Engineering - {}'.format(x['EngineeringTime'][0]),
-              'Weather - {}'.format(x['TimeLostToWeather'][0]),
-              'Problems - {}'.format(x['TimeLostToProblems'][0])]
+    labels = ['Science - {}'.format(format_hh_mm(x['Science'][0])),
+              'Engineering - {}'.format(format_hh_mm(x['Engineering'][0])),
+              'Weather - {}'.format(format_hh_mm(x['Weather'][0])),
+              'Problems - {}'.format(format_hh_mm(x['Problems'][0]))]
 
     values = [int(x['Science']),
               int(x['Engineering']),
@@ -438,7 +439,7 @@ def total_time_breakdown_plot(db_connection, plot_date, interval, title, plot_wi
     last_night = plot_date - timedelta(days=1)
     title_txt = title.format(first_night=first_night.strftime('%Y-%m-%d'),
                              last_night=last_night.strftime('%Y-%m-%d'),
-                             total_night_length=x['NightLength'][0])
+                             total_night_length=format_hh_mm(x['Total'][0]))
 
     return pie_chart(values=values,
                      categories=labels,
@@ -500,7 +501,7 @@ def subsystem_breakdown(db_connection, plot_date, interval, title, out, format='
     y = rq.weekly_subsystem_breakdown_total(db_connection, plot_date, interval)
 
     subsystem = list(x['SaltSubsystem'])
-    time = list(x['TotalTime'])
+    time = [format_hh_mm(t) for t in list(x['Time'])]
 
     labels = [subsystem[i] + ' - ' + time[i] for i in range(0, len(subsystem))]
     values = list(x['Time'])
@@ -522,7 +523,7 @@ def subsystem_breakdown(db_connection, plot_date, interval, title, out, format='
     last_night = plot_date - timedelta(days=1)
     title_txt = title.format(first_night=first_night.strftime('%Y-%m-%d'),
                              last_night=last_night.strftime('%Y-%m-%d'),
-                             total_time=y['TotalTime'][0])
+                             total_time=format_hh_mm(y['Time'][0]))
     ax.set_title(title_txt, fontsize=12)
 
     if type(out) is str:
@@ -582,7 +583,7 @@ def subsystem_breakdown_plot(db_connection, plot_date, interval, title, plot_wid
     y = rq.weekly_subsystem_breakdown_total(db_connection, plot_date, interval)
 
     subsystem = list(x['SaltSubsystem'])
-    time = list(x['TotalTime'])
+    time = [format_hh_mm(t) for t in list(x['Time'])]
 
     labels = [subsystem[i] + ' - ' + time[i] for i in range(0, len(subsystem))]
     values = list(x['Time'])
@@ -606,7 +607,7 @@ def subsystem_breakdown_plot(db_connection, plot_date, interval, title, plot_wid
     last_night = plot_date - timedelta(days=1)
     title_txt = title.format(first_night=first_night.strftime('%Y-%m-%d'),
                              last_night=last_night.strftime('%Y-%m-%d'),
-                             total_time=y['TotalTime'][0])
+                             total_time=format_hh_mm(y['Time'][0]))
 
     # there must be at least one value for a pie chart
     if not values:
@@ -790,3 +791,9 @@ def time_breakdown_plot(db_connection, plot_date, interval, title, plot_width, p
                              plot_width=plot_width,
                              plot_height=plot_height,
                              legend_height=legend_height)
+
+def format_hh_mm(t):
+    t = int(t)
+    hours, remainder = divmod(t, 3600)
+    minutes, remainder = divmod(remainder, 60)
+    return '{hours:02d}h{minutes:02d}m'.format(hours=hours, minutes=minutes)

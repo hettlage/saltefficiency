@@ -35,7 +35,6 @@ def weekly_priority_breakdown(mysql_con, date, interval=7):
     '''
 
     wpb = pd.read_sql_query('''SELECT Priority, Sum(Accepted) as "No. Blocks",
-    TIME_FORMAT(SEC_TO_TIME(sum(ObsTime)), '%%Hh%%im') as "Total Time",
     sum(ObsTime) as "Tsec"
     FROM Block
     JOIN BlockVisit USING (Block_Id)
@@ -53,11 +52,6 @@ def lastnight_time_breakdown(mysql_con, date, interval=7):
     '''
 
     ltb = pd.read_sql_query('''SELECT Date,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToWeather)), 0),'%%Hh%%im') `TimeLostToWeather`,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToProblems)), 0),'%%Hh%%im') `TimeLostToProblems`,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(EngineeringTime)), 0),'%%Hh%%im') `EngineeringTime`,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(ScienceTime)), 0),'%%Hh%%im') `ScienceTime`,
-    TIME_FORMAT(SEC_TO_TIME(SUM(TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart))), '%%Hh%%im') as NightLength,
     IFNULL(SUM(TimeLostToWeather), 0) `Weather`,
     IFNULL(SUM(TimeLostToProblems), 0) `Problems`,
     IFNULL(SUM(EngineeringTime), 0) `Engineering`,
@@ -103,11 +97,6 @@ def weekly_total_time_breakdown(mysql_con, date, interval=7):
 
     wttb = pd.read_sql_query('''SELECT DATE_SUB(DATE(NOW()), INTERVAL 7 DAY) as StartDate,
     DATE_SUB(DATE(NOW()), INTERVAL 1 DAY) as  EndDate,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToWeather)), 0),'%%Hh%%im') `TimeLostToWeather`,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(TimeLostToProblems)), 0),'%%Hh%%im') `TimeLostToProblems`,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(EngineeringTime)), 0),'%%Hh%%im') `EngineeringTime`,
-    TIME_FORMAT(IFNULL(SEC_TO_TIME(SUM(ScienceTime)), 0),'%%Hh%%im') `ScienceTime`,
-    TIME_FORMAT(SEC_TO_TIME(SUM(TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart))), '%%Hh%%im') as NightLength,
     IFNULL(SUM(TimeLostToWeather), 0) `Weather`,
     IFNULL(SUM(TimeLostToProblems), 0) `Problems`,
     IFNULL(SUM(EngineeringTime), 0) `Engineering`,
@@ -129,7 +118,8 @@ def lastnight_subsystem_breakdown(mysql_con, date, interval=7):
     SEC_TO_TIME(SUM(TimeLost)) as "TimeLost",
     SUM(TimeLost) as "Time"
     FROM Fault JOIN NightInfo USING (NightInfo_Id) JOIN SaltSubsystem USING (SaltSubsystem_Id)
-    WHERE Fault.Deleted=0 AND Timelost IS NOT NULL AND DATE(Date) =  DATE_SUB(DATE('{}'), INTERVAL 1 DAY) GROUP BY SaltSubsystem;
+    WHERE Fault.Deleted=0 AND Timelost IS NOT NULL AND DATE(Date) =  DATE_SUB(DATE('{}'), INTERVAL 1 DAY)
+    GROUP BY SaltSubsystem;
     '''.format(date), con=mysql_con)
 
     return lsb
@@ -144,7 +134,6 @@ def weekly_subsystem_breakdown(mysql_con, date, interval=7):
 
 
     wsb = pd.read_sql_query('''SELECT SaltSubsystem,
-    TIME_FORMAT(SEC_TO_TIME(SUM(TimeLost)),'%%Hh%%im') as "TotalTime",
     SUM(TimeLost) as "Time"
     FROM Fault JOIN NightInfo USING (NightInfo_Id)
     JOIN SaltSubsystem USING (SaltSubsystem_Id)
@@ -162,11 +151,10 @@ def weekly_subsystem_breakdown_total(mysql_con, date, interval=7):
     '''
 
     wsbt = pd.read_sql_query('''SELECT SaltSubsystem,
-    TIME_FORMAT(SEC_TO_TIME(SUM(TimeLost)),'%%Hh%%im') as "TotalTime",
     SUM(TimeLost) as "Time"
     FROM Fault JOIN NightInfo USING (NightInfo_Id)
     JOIN SaltSubsystem USING (SaltSubsystem_Id)
-    WHERE Fault.Deleted=0 AND Timelost IS NOT NULL
+    WHERE Fault.Deleted = 0 AND Timelost IS NOT NULL
     AND Date BETWEEN DATE_SUB(DATE('{}'), INTERVAL {} DAY)
     AND DATE_SUB(DATE('{}'), INTERVAL 1 DAY);
     '''.format(date, interval, date), con=mysql_con)
