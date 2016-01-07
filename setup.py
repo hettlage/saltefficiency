@@ -6,7 +6,7 @@ for line in readme:
     readme_text += line
 
 setup(name='salt_efficiency',
-      version='0.2.12',
+      version='0.2.13',
       author='Paul Kotze',
       author_email='jpk@saao.ac.za',
       url='http://astronomer.salt.ac.za',

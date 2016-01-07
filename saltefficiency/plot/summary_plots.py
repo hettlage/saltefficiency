@@ -793,6 +793,8 @@ def time_breakdown_plot(db_connection, plot_date, interval, title, plot_width, p
                              legend_height=legend_height)
 
 def format_hh_mm(t):
+    if t is None:
+        return '00h00m'
     t = int(t)
     hours, remainder = divmod(t, 3600)
     minutes, remainder = divmod(remainder, 60)
