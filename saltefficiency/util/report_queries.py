@@ -43,7 +43,7 @@ def weekly_priority_breakdown(mysql_con, date, interval=7):
     JOIN ProposalType USING (ProposalType_Id)
     WHERE Date BETWEEN DATE_SUB(DATE('{}'), INTERVAL {} DAY)
     AND DATE_SUB(DATE('{}'), INTERVAL 1 DAY)
-    AND (ProposalType.ProposalType NOT IN ('Commissioning', 'Engineering')
+    AND ProposalType.ProposalType NOT IN ('Commissioning', 'Engineering')
     AND Accepted=1 GROUP BY Priority;
     '''.format(date, interval, date), mysql_con)
 
