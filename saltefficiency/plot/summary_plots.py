@@ -495,6 +495,8 @@ def subsystem_breakdown(db_connection, plot_date, interval, title, out, format='
 
     for i in range(0, len(subsystems_list)):
         col_dict[subsystems_list[i]] = colour_map[i]
+    col_dict['DOME'] = np.array([1., 0, 1., 1.])
+    col_dict['TC'] = np.array([1., 0.475, 0.5, 1.])
 
     # get data from database
     x = rq.weekly_subsystem_breakdown(db_connection, plot_date, interval)
@@ -577,6 +579,8 @@ def subsystem_breakdown_plot(db_connection, plot_date, interval, title, plot_wid
     color_dict = {}
     for i, s in enumerate(subsystems_list):
         color_dict[s] = colors_list[i]
+    color_dict['DOME'] = np.array([1., 0, 1., 1.])
+    color_dict['TC'] = np.array([1., 0.475, 0.5, 1.])
 
     # get data from database
     x = rq.weekly_subsystem_breakdown(db_connection, plot_date, interval)
