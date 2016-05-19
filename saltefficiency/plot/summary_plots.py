@@ -626,7 +626,7 @@ def subsystem_breakdown_plot(db_connection, plot_date, interval, title, plot_wid
                      plot_width=plot_width,
                      legend_width=legend_width,
                      pie_slice_label='{0:.1f} %',
-                     text_color='white')
+                     text_color='black')
 
 def time_breakdown(db_connection, plot_date, interval, title, out, format='png', dpi=100):
     """Output a stacked bar plot of the time breakdown.
