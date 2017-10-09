@@ -38,15 +38,15 @@ def weekly_priority_breakdown(mysql_con, date, interval=7):
     sum(ObsTime) as "Tsec"
     FROM Block
     JOIN BlockVisit USING (Block_Id)
+    JOIN BlockVisitStatus USING (BlockVisitStatus_Id)
     JOIN NightInfo USING (NightInfo_Id)
     JOIN Proposal ON (Block.Proposal_Id=Proposal.Proposal_Id)
     JOIN ProposalGeneralInfo ON (Proposal.ProposalCode_Id=ProposalGeneralInfo.ProposalCode_Id)
     JOIN ProposalType USING (ProposalType_Id)
-    JOIN ProposalStatus USING (ProposalStatus_Id)
     WHERE Date BETWEEN DATE_SUB(DATE('{}'), INTERVAL {} DAY)
     AND DATE_SUB(DATE('{}'), INTERVAL 1 DAY)
     AND ProposalType.ProposalType NOT IN ('Commissioning', 'Engineering')
-    AND ProposalStatus.Status='Accepted' GROUP BY Priority;
+    AND BlockVisitStatus.BlockVisitStatus='Accepted' GROUP BY Priority;
     '''.format(date, interval, date), mysql_con)
 
     return wpb
