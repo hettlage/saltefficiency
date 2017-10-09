@@ -389,6 +389,10 @@ def normalize(values, normalized_total):
     ValueError: at least one value must be non-zero
     """
 
+    # empty lists are just returned
+    if not len(values):
+        return values
+
     # make sure we have numbers
     values = [float(v) for v in values]
     normalized_total = float(normalized_total)
