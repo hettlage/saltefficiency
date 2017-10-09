@@ -34,17 +34,19 @@ def weekly_priority_breakdown(mysql_con, date, interval=7):
     observed and total time spent per priority for the last week.
     '''
 
-    wpb = pd.read_sql_query('''SELECT Priority, Sum(Accepted) as "No. Blocks",
+    wpb = pd.read_sql_query('''SELECT Priority, COUNT(*) as "No. Blocks",
     sum(ObsTime) as "Tsec"
     FROM Block
     JOIN BlockVisit USING (Block_Id)
     JOIN NightInfo USING (NightInfo_Id)
     JOIN Proposal ON (Block.Proposal_Id=Proposal.Proposal_Id)
+    JOIN ProposalGeneralInfo ON (Proposal.ProposalCode_Id=ProposalGeneralInfo.ProposalCode_Id)
     JOIN ProposalType USING (ProposalType_Id)
+    JOIN ProposalStatus USING (ProposalStatus_Id)
     WHERE Date BETWEEN DATE_SUB(DATE('{}'), INTERVAL {} DAY)
     AND DATE_SUB(DATE('{}'), INTERVAL 1 DAY)
     AND ProposalType.ProposalType NOT IN ('Commissioning', 'Engineering')
-    AND Accepted=1 GROUP BY Priority;
+    AND ProposalStatus.Status='Accepted' GROUP BY Priority;
     '''.format(date, interval, date), mysql_con)
 
     return wpb
