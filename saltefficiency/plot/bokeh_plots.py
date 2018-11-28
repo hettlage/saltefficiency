@@ -358,6 +358,8 @@ def normalize(values, normalized_total):
 
     The values are scaled so that their sum is equal to `normalized_total`, and a list of the scaled values is returned.
 
+    If the sum of the values is 0, the values are returned as is.
+
     Parameters
     ----------
     values : array_like
@@ -370,11 +372,6 @@ def normalize(values, normalized_total):
     list
         Normalized values.
 
-    Raises
-    ------
-    ValueError
-        If any of the values or the total is a non-number, or if all values are zero.
-
     Examples
     --------
     >>> normalize([1, 2], 2 * math.pi)
@@ -384,9 +381,7 @@ def normalize(values, normalized_total):
     [50.0, 0.0, 50.0]
 
     >>> normalize([0, 0], 1)
-    Traceback (most recent call last):
-    ...
-    ValueError: at least one value must be non-zero
+    [0, 0]
     """
 
     # empty lists are just returned
@@ -405,7 +400,7 @@ def normalize(values, normalized_total):
     # there must be non-zero values
     total = sum(values)
     if total == 0:
-        raise ValueError('at least one value must be non-zero')
+        return [v for v in values]
 
     # normalize
     return [normalized_total * v / total for v in values]
