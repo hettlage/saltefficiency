@@ -63,6 +63,9 @@ def pie_chart(values, categories, colors, title, plot_width, legend_width, text_
         if v < 0:
             raise ValueError('values must be non-negative: {0}'.format(v))
 
+    # sort categories by decreasing value
+    values, categories = map(list, zip(*sorted(zip(values, categories), reverse=True)))
+
     # convert values to angles and percentages
     angles = normalize(values, 2 * math.pi)
     percentages = normalize(values, 100.)
