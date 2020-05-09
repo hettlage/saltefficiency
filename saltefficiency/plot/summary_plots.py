@@ -300,6 +300,10 @@ def priority_breakdown_plot(db_connection, plot_date, interval, title, plot_widt
     labels = ['P'+str(temp[i])+' - ' + str(no_blocks[i]) for i in range(0,len(temp))]
     values = list(x['Tsec'])
 
+    # there is nothing to plot
+    if not values:
+        return None
+
     # set colours for the priorities
     priority_colors = ['blue', '#02C8CA', 'green', 'magenta', 'red']
     colors = [priority_colors[i] for i in temp]
