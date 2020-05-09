@@ -362,14 +362,15 @@ def total_time_breakdown(db_connection, plot_date, interval, title, out, format=
     labels = ['Science - {}'.format(format_hh_mm(x['Science'][0])),
               'Engineering - {}'.format(format_hh_mm(x['Engineering'][0])),
               'Weather - {}'.format(format_hh_mm(x['Weather'][0])),
-              'Problems - {}'.format(format_hh_mm(x['Problems'][0]))]
+              'Problems - {}'.format(format_hh_mm(x['Problems'][0])),
+              'Other - {}'.format(format_hh_mm(x['Problems'][0]))]
 
     values = [int(x['Science']),
               int(x['Engineering']),
               int(x['Weather']),
               int(x['Problems'])]
 
-    colours = ['b','c','g','r']
+    colours = ['b','c','g','r', '#aaaaaa']
 
     ax.pie(values,
            colors=colours,
@@ -430,20 +431,26 @@ def total_time_breakdown_plot(db_connection, plot_date, interval, title, plot_wi
     labels = ['Science - {}'.format(format_hh_mm(x['Science'][0])),
               'Engineering - {}'.format(format_hh_mm(x['Engineering'][0])),
               'Weather - {}'.format(format_hh_mm(x['Weather'][0])),
-              'Problems - {}'.format(format_hh_mm(x['Problems'][0]))]
+              'Problems - {}'.format(format_hh_mm(x['Problems'][0])),
+              'Other - {}'.format(format_hh_mm(x['Other'][0])),
+              'Unallocated - {}'.format(format_hh_mm(x['Unallocated'][0]))]
 
     values = [int(x['Science']),
               int(x['Engineering']),
               int(x['Weather']),
-              int(x['Problems'])]
+              int(x['Problems']),
+              int(x['Other']),
+              max(0, int(x['Unallocated']))]
 
-    colors = ['blue','#02C8CA','green','red']
+    colors = ['blue','#02C8CA','green','red', '#aaaaaa', 'orange']
 
     first_night = plot_date - timedelta(days=interval)
     last_night = plot_date - timedelta(days=1)
     title_txt = title.format(first_night=first_night.strftime('%Y-%m-%d'),
                              last_night=last_night.strftime('%Y-%m-%d'),
                              total_night_length=format_hh_mm(x['Total'][0]))
+    if int(x['Unallocated']) < 0:
+        title_txt += ' WITH TIME OVERALLOCATION'
 
     return pie_chart(values=values,
                      categories=labels,
@@ -701,14 +708,23 @@ def time_breakdown(db_connection, plot_date, interval, title, out, format='png',
                color='r',
                edgecolor='w')
 
+    # other time per day
+    o = ax.bar(data['Date'],
+               data['Other'],
+               width,
+               bottom=data['Science'] + data['Engineering'] + data['Weather'] + data['Problems'],
+               color='#aaaaaa',
+               edgecolor='w')
+
 
     ax.set_ylabel('Hours', fontsize=11)
     ax.set_xlabel('Date', fontsize=11)
-    fig.legend((s[0], e[0], w[0], p[0]),
+    fig.legend((s[0], e[0], w[0], p[0], o[0]),
                ('Science Time',
                 'Engineering Time',
                 'Time lost to Weather',
-                'Time lost to Problems'),
+                'Time lost to Problems',
+                'Other Time'),
                frameon=False,
                fontsize=10,
                loc=(0.0, 0.70))
@@ -775,7 +791,7 @@ def time_breakdown_plot(db_connection, plot_date, interval, title, plot_width, p
     # get data from database
     data = rq.weekly_time_breakdown(db_connection, plot_date, interval)
     dates = [d.strftime('%a, %Y-%m-%d') for d in data['Date'].values]
-    keys = ('Science', 'Engineering', 'Weather', 'Problems')
+    keys = ('Science', 'Engineering', 'Weather', 'Problems', 'Other', 'Unallocated')
     values = OrderedDict()
     for i, _ in enumerate(dates):
         for key in keys:
@@ -783,7 +799,12 @@ def time_breakdown_plot(db_connection, plot_date, interval, title, plot_width, p
                 values[key] = []
             values[key].append(data[key][i])
 
-    colors = ['blue', '#02C8CA', 'green', 'red']
+    # avoid errors because of time overallocation
+    for i in range(len(values['Unallocated'])):
+        if values['Unallocated'][i] < 0:
+            values['Unallocated'][i] = 0
+
+    colors = ['blue', '#02C8CA', 'green', 'red', '#aaaaaa', 'orange']
 
     first_night = plot_date - timedelta(days=interval)
     last_night = plot_date - timedelta(days=1)

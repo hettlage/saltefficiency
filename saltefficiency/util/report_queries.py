@@ -61,6 +61,15 @@ def lastnight_time_breakdown(mysql_con, date, interval=7):
     IFNULL(SUM(TimeLostToProblems), 0) `Problems`,
     IFNULL(SUM(EngineeringTime), 0) `Engineering`,
     IFNULL(SUM(ScienceTime), 0) `Science`,
+    IFNULL(SUM(OtherTime), 0), `Other`,
+    SUM(
+        TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart)
+        - IFNULL(TimeLostToWeather, 0)
+        - IFNULL(TimeLostToProblems, 0)
+        - IFNULL(EngineeringTime, 0)
+        - IFNULL(ScienceTime, 0)
+        - IFNULL(OtherTime, 0)
+    ) `UnallocatedTime`,
     SUM(TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart)) as Total
     FROM NightInfo
     WHERE Date BETWEEN DATE_SUB(DATE(NOW()), INTERVAL 1 DAY) AND DATE_SUB(DATE(NOW()), INTERVAL 1 DAY);
@@ -80,11 +89,29 @@ def weekly_time_breakdown(mysql_con, date, interval=7):
     IFNULL(SEC_TO_TIME(TimeLostToProblems), 0) `TimeLostToProblems`,
     IFNULL(SEC_TO_TIME(EngineeringTime), 0) `EngineeringTime`,
     IFNULL(SEC_TO_TIME(ScienceTime), 0) `ScienceTime`,
+    IFNULL(SEC_TO_TIME(OtherTime), 0) `OtherTime`,
+    SEC_TO_TIME(
+        TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart)
+        - IFNULL(TimeLostToWeather, 0)
+        - IFNULL(TimeLostToProblems, 0)
+        - IFNULL(EngineeringTime, 0)
+        - IFNULL(ScienceTime, 0)
+        - IFNULL(OtherTime, 0)
+    ) `UnallocatedTime`,
     SEC_TO_TIME(TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart)) as NightLength,
     IFNULL(TimeLostToWeather / 3600, 0) `Weather`,
     IFNULL(TimeLostToProblems/ 3600, 0) `Problems`,
     IFNULL(EngineeringTime / 3600, 0) `Engineering`,
     IFNULL(ScienceTime / 3600, 0) `Science`,
+    IFNULL(OtherTime / 3600, 0) `Other`,
+    (
+        TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart)
+        - IFNULL(TimeLostToWeather, 0)
+        - IFNULL(TimeLostToProblems, 0)
+        - IFNULL(EngineeringTime, 0)
+        - IFNULL(ScienceTime, 0)
+        - IFNULL(OtherTime, 0)
+    ) / 3600 `Unallocated`,
     TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart) as Night
     FROM NightInfo
     WHERE Date BETWEEN DATE_SUB(DATE('{}'), INTERVAL {} DAY)
@@ -106,6 +133,15 @@ def weekly_total_time_breakdown(mysql_con, date, interval=7):
     IFNULL(SUM(TimeLostToProblems), 0) `Problems`,
     IFNULL(SUM(EngineeringTime), 0) `Engineering`,
     IFNULL(SUM(ScienceTime), 0) `Science`,
+    IFNULL(SUM(OtherTime), 0) `Other`,
+    SUM(
+        TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart)
+        - IFNULL(TimeLostToWeather, 0)
+        - IFNULL(TimeLostToProblems, 0)
+        - IFNULL(EngineeringTime, 0)
+        - IFNULL(ScienceTime, 0)
+        - IFNULL(OtherTime, 0)
+    ) `Unallocated`,
     SUM(TIMESTAMPDIFF(SECOND,  EveningTwilightEnd, MorningTwilightStart)) as Total
     FROM NightInfo
     WHERE Date BETWEEN DATE_SUB(DATE('{}'), INTERVAL {} DAY)
