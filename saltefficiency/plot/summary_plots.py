@@ -435,12 +435,20 @@ def total_time_breakdown_plot(db_connection, plot_date, interval, title, plot_wi
               'Other - {}'.format(format_hh_mm(x['Other'][0])),
               'Unallocated - {}'.format(format_hh_mm(x['Unallocated'][0]))]
 
+    overallocated = False
+    if int(x['Unallocated']) < 0:
+        # The pie plot will fail for negative values and will ignore a zero value. Hence
+        # we choose a smallk positive value, so that the pie plot displays it as 0 % but
+        # has the label with the negative time value in the legend.
+        x['Unallocated'] = 1
+        overallocated = True
+
     values = [int(x['Science']),
               int(x['Engineering']),
               int(x['Weather']),
               int(x['Problems']),
               int(x['Other']),
-              max(0, int(x['Unallocated']))]
+              int(x['Unallocated'])]
 
     colors = ['blue','#02C8CA','green','red', '#aaaaaa', 'orange']
 
@@ -449,7 +457,7 @@ def total_time_breakdown_plot(db_connection, plot_date, interval, title, plot_wi
     title_txt = title.format(first_night=first_night.strftime('%Y-%m-%d'),
                              last_night=last_night.strftime('%Y-%m-%d'),
                              total_night_length=format_hh_mm(x['Total'][0]))
-    if int(x['Unallocated']) < 0:
+    if overallocated:
         title_txt += ' WITH TIME OVERALLOCATION'
 
     return pie_chart(values=values,
