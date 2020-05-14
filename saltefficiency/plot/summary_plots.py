@@ -832,7 +832,9 @@ def time_breakdown_plot(db_connection, plot_date, interval, title, plot_width, p
 def format_hh_mm(t):
     if t is None:
         return '00h00m'
+    sign = '-' if t < 0 else ''
+    t = abs(t)
     t = int(t)
     hours, remainder = divmod(t, 3600)
     minutes, remainder = divmod(remainder, 60)
-    return '{hours:02d}h{minutes:02d}m'.format(hours=hours, minutes=minutes)
+    return '{sign}{hours:02d}h{minutes:02d}m'.format(sign=sign, hours=hours, minutes=minutes)
