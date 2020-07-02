@@ -590,7 +590,7 @@ def subsystem_breakdown_plot(db_connection, plot_date, interval, title, plot_wid
     ax.set_aspect = 0.8
 
     # set the colours for all the subsystems:
-    subsystems_list = ['BMS', 'DOME', 'TC', 'PMAS', 'SCAM', 'TCS', 'STRUCT',
+    subsystems_list = ['BMS', 'Database', 'DOME', 'Network', 'TC', 'PMAS', 'SCAM', 'TCS', 'STRUCT',
                        'TPC', 'HRS', 'PFIS','Proposal', 'Operations',
                        'ELS', 'ESKOM']
     cmap = pl.cm.jet
